@@ -61,20 +61,20 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
       <div 
-        className="relative w-full max-w-lg bg-slate-900 border border-amber-500/30 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-lg bg-slate-900 border border-amber-500/30 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] sm:max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/50">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xl">🪷</span>
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-800 bg-slate-950/50">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <span className="text-lg sm:text-xl">🪷</span>
             <div>
-              <h2 className="text-base font-bold text-amber-200">
+              <h2 className="text-sm sm:text-base font-bold text-amber-200">
                 สร้างและลอยกระทงออนไลน์
               </h2>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[10px] sm:text-[11px] text-slate-400">
                 ขั้นตอนที่ {step} จาก 3: {step === 1 ? 'เลือกตัวละคร' : step === 2 ? 'เลือกกระทง' : 'อธิษฐานขอพร'}
               </p>
             </div>
@@ -83,7 +83,7 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
             onClick={onClose}
             className="p-1.5 rounded-full text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
@@ -96,9 +96,9 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3.5 sm:p-6">
           {errorMsg && (
-            <div className="mb-4 p-3 bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs rounded-xl flex items-center gap-2">
+            <div className="mb-3 p-2.5 bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs rounded-xl flex items-center gap-2">
               <span>⚠️</span>
               <span>{errorMsg}</span>
             </div>
@@ -116,12 +116,12 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
         </div>
 
         {/* Footer Navigation Controls */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-800 bg-slate-950/60">
+        <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-t border-slate-800 bg-slate-950/70">
           {step > 1 ? (
             <button
               type="button"
               onClick={handleBack}
-              className="flex items-center gap-1 px-4 py-2 text-xs font-semibold text-slate-300 hover:text-slate-100 bg-slate-800/80 hover:bg-slate-800 rounded-xl transition-all cursor-pointer"
+              className="flex items-center gap-1 px-3 py-2 sm:px-4 sm:py-2 text-xs font-semibold text-slate-300 hover:text-slate-100 bg-slate-800/80 hover:bg-slate-800 rounded-xl transition-all cursor-pointer active:scale-95"
             >
               <ChevronLeft size={16} /> ย้อนกลับ
             </button>
@@ -133,7 +133,7 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
             <button
               type="button"
               onClick={handleNext}
-              className="flex items-center gap-1.5 px-5 py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 rounded-xl shadow-lg transition-all cursor-pointer"
+              className="flex items-center gap-1 px-4 py-2 sm:px-5 sm:py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 rounded-xl shadow-lg transition-all cursor-pointer active:scale-95"
             >
               ถัดไป <ChevronRight size={16} />
             </button>
@@ -141,9 +141,9 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
             <button
               type="button"
               onClick={handleSubmit}
-              className="flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 hover:from-amber-300 hover:to-orange-300 rounded-xl shadow-xl transition-all transform hover:scale-105 active:scale-95 cursor-pointer border border-yellow-200"
+              className="flex items-center gap-1.5 sm:gap-2 px-4 py-2 sm:px-6 sm:py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-400 hover:from-amber-300 hover:to-orange-300 rounded-xl shadow-xl transition-all active:scale-95 cursor-pointer border border-yellow-200"
             >
-              <Sparkles size={16} /> ลอยกระทงลงสู่สายน้ำ 🪷
+              <Sparkles size={15} /> ลอยกระทงลงสู่สายน้ำ 🪷
             </button>
           )}
         </div>

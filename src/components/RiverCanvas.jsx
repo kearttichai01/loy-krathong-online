@@ -35,11 +35,11 @@ export default function RiverCanvas({
     }
 
     const lanterns = [];
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < 20; i++) {
       lanterns.push({
         x: Math.random(),
-        y: Math.random() * 0.4,
-        size: 14 + Math.random() * 16,
+        y: Math.random() * 0.45,
+        size: 13 + Math.random() * 15,
         speedY: 0.00015 + Math.random() * 0.0002,
         swaySpeed: 0.001 + Math.random() * 0.002,
         swayOffset: Math.random() * Math.PI * 2,
@@ -81,7 +81,7 @@ export default function RiverCanvas({
     animationState.current.krathongsState = updated;
   }, [krathongs]);
 
-  // Handle Resize and Animation Loop
+  // Handle Resize & Orientation Change
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -89,18 +89,24 @@ export default function RiverCanvas({
     let animationFrameId;
 
     const handleResize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2 for performance on Retina iPads
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); // reset scale
       ctx.scale(dpr, dpr);
-      animationState.current.width = window.innerWidth;
-      animationState.current.height = window.innerHeight;
+      animationState.current.width = w;
+      animationState.current.height = h;
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(handleResize, 150);
+    });
 
     const render = () => {
       animationState.current.time += 0.016;
@@ -110,27 +116,29 @@ export default function RiverCanvas({
 
       ctx.clearRect(0, 0, w, h);
 
-      // 1. SKY GRADIENT (Night time, deep indigo to purple-black)
-      const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.5);
+      // 1. SKY GRADIENT
+      const isLandscape = w > h;
+      const skyHeightRatio = isLandscape ? 0.45 : 0.42;
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h * skyHeightRatio);
       skyGrad.addColorStop(0, '#060913');
       skyGrad.addColorStop(0.5, '#0b1329');
       skyGrad.addColorStop(1, '#111e38');
       ctx.fillStyle = skyGrad;
-      ctx.fillRect(0, 0, w, h * 0.55);
+      ctx.fillRect(0, 0, w, h * (skyHeightRatio + 0.05));
 
       // 2. STARS
       animationState.current.stars.forEach((star) => {
         const twinkle = Math.sin(t * star.twinkleSpeed * 60) * 0.3;
         ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, star.alpha + twinkle)})`;
         ctx.beginPath();
-        ctx.arc(star.x * w, star.y * h, star.radius, 0, Math.PI * 2);
+        ctx.arc(star.x * w, star.y * h * (skyHeightRatio / 0.45), star.radius, 0, Math.PI * 2);
         ctx.fill();
       });
 
-      // 3. FULL MOON (พระจันทร์วันเพ็ญ 🌕)
-      const moonX = w * 0.82;
-      const moonY = h * 0.18;
-      const moonR = Math.min(w, h) * 0.085;
+      // 3. FULL MOON (Adaptive size for Mobile / iPad / Desktop)
+      const moonX = isLandscape ? w * 0.84 : w * 0.80;
+      const moonY = isLandscape ? h * 0.18 : h * 0.16;
+      const moonR = Math.max(26, Math.min(w, h) * (isLandscape ? 0.08 : 0.09));
 
       // Outer Moon Halo
       const moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * 0.8, moonX, moonY, moonR * 3.5);
@@ -155,14 +163,14 @@ export default function RiverCanvas({
       // Soft Moon Clouds
       ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
       ctx.beginPath();
-      ctx.ellipse(moonX + 15, moonY + 8, moonR * 1.4, moonR * 0.35, -0.1, 0, Math.PI * 2);
+      ctx.ellipse(moonX + 12, moonY + 6, moonR * 1.3, moonR * 0.35, -0.1, 0, Math.PI * 2);
       ctx.fill();
 
       // 4. FLOATING SKY LANTERNS (โคมลอย)
       animationState.current.lanterns.forEach((lantern) => {
         lantern.y -= lantern.speedY;
         if (lantern.y < -0.05) {
-          lantern.y = 0.48;
+          lantern.y = skyHeightRatio + 0.05;
           lantern.x = Math.random();
         }
         const swayX = Math.sin(t * lantern.swaySpeed * 100 + lantern.swayOffset) * 15;
@@ -191,15 +199,14 @@ export default function RiverCanvas({
         ctx.fill();
       });
 
-      // 5. DISTANT TEMPLE SHADOW & TREES SILHOUETTE (ขอบฝั่งแม่น้ำ)
-      const riverTopY = h * 0.45;
+      // 5. DISTANT SILHOUETTES (ขอบฝั่งแม่น้ำ)
+      const riverTopY = h * skyHeightRatio;
       ctx.fillStyle = '#070b16';
       ctx.beginPath();
       ctx.moveTo(0, riverTopY);
-      // Gentle hills & temple pagoda silhouettes
       for (let x = 0; x <= w; x += 40) {
         const hill = Math.sin(x * 0.005) * 12 + Math.sin(x * 0.015) * 8;
-        ctx.lineTo(x, riverTopY - 18 + hill);
+        ctx.lineTo(x, riverTopY - 14 + hill);
       }
       ctx.lineTo(w, riverTopY);
       ctx.lineTo(w, h);
@@ -208,26 +215,25 @@ export default function RiverCanvas({
       ctx.fill();
 
       // Distant Pagoda (เจดีย์ริมน้ำ)
-      const pagodaX = w * 0.35;
+      const pagodaX = w * (isLandscape ? 0.35 : 0.28);
       ctx.fillStyle = '#060913';
       ctx.beginPath();
-      ctx.moveTo(pagodaX - 25, riverTopY - 10);
-      ctx.lineTo(pagodaX - 15, riverTopY - 35);
-      ctx.lineTo(pagodaX - 6, riverTopY - 70);
-      ctx.lineTo(pagodaX, riverTopY - 95); // spire
-      ctx.lineTo(pagodaX + 6, riverTopY - 70);
-      ctx.lineTo(pagodaX + 15, riverTopY - 35);
-      ctx.lineTo(pagodaX + 25, riverTopY - 10);
+      ctx.moveTo(pagodaX - 22, riverTopY - 8);
+      ctx.lineTo(pagodaX - 13, riverTopY - 32);
+      ctx.lineTo(pagodaX - 5, riverTopY - 60);
+      ctx.lineTo(pagodaX, riverTopY - 85); // spire
+      ctx.lineTo(pagodaX + 5, riverTopY - 60);
+      ctx.lineTo(pagodaX + 13, riverTopY - 32);
+      ctx.lineTo(pagodaX + 22, riverTopY - 8);
       ctx.closePath();
       ctx.fill();
 
-      // Golden spire tip glow
       ctx.fillStyle = 'rgba(253, 224, 71, 0.4)';
       ctx.beginPath();
-      ctx.arc(pagodaX, riverTopY - 95, 4, 0, Math.PI * 2);
+      ctx.arc(pagodaX, riverTopY - 85, 3.5, 0, Math.PI * 2);
       ctx.fill();
 
-      // 6. RIVER WATER (แม่น้ำเจ้าพระยา/สายธารคืนวันเพ็ญ)
+      // 6. RIVER WATER
       const riverGrad = ctx.createLinearGradient(0, riverTopY, 0, h);
       riverGrad.addColorStop(0, '#0c1a30');
       riverGrad.addColorStop(0.3, '#091b35');
@@ -236,7 +242,7 @@ export default function RiverCanvas({
       ctx.fillStyle = riverGrad;
       ctx.fillRect(0, riverTopY, w, h - riverTopY);
 
-      // Moon Reflection on Water (แสงจันทร์พาดผ่านผืนน้ำ)
+      // Moon Reflection on Water
       const moonReflectGrad = ctx.createLinearGradient(moonX - 70, 0, moonX + 70, 0);
       moonReflectGrad.addColorStop(0, 'rgba(253, 224, 71, 0)');
       moonReflectGrad.addColorStop(0.5, 'rgba(254, 240, 138, 0.12)');
@@ -244,12 +250,13 @@ export default function RiverCanvas({
       ctx.fillStyle = moonReflectGrad;
       ctx.fillRect(moonX - 80, riverTopY, 160, h - riverTopY);
 
-      // Shimmering Water Waves (ระลอกคลื่นน้ำสะท้อนแสง)
-      for (let waveIdx = 0; waveIdx < 16; waveIdx++) {
-        const wy = riverTopY + (waveIdx / 16) * (h - riverTopY);
+      // Shimmering Water Waves
+      const waveCount = isLandscape ? 16 : 12;
+      for (let waveIdx = 0; waveIdx < waveCount; waveIdx++) {
+        const wy = riverTopY + (waveIdx / waveCount) * (h - riverTopY);
         const waveSpeed = 0.8 + waveIdx * 0.1;
-        ctx.strokeStyle = `rgba(147, 197, 253, ${0.04 + (waveIdx / 16) * 0.08})`;
-        ctx.lineWidth = 1.2 + (waveIdx / 16) * 1.5;
+        ctx.strokeStyle = `rgba(147, 197, 253, ${0.04 + (waveIdx / waveCount) * 0.08})`;
+        ctx.lineWidth = 1.2 + (waveIdx / waveCount) * 1.5;
         ctx.beginPath();
         for (let wx = 0; wx <= w; wx += 50) {
           const waveHeight = Math.sin(wx * 0.015 + t * waveSpeed + waveIdx) * (3 + waveIdx * 0.4);
@@ -259,7 +266,7 @@ export default function RiverCanvas({
         ctx.stroke();
       }
 
-      // 7. KRATHONGS IN WATER (เรียงตามแกน Y เพื่อให้กระทงที่อยู่ลึกกว่าอยู่ด้านหน้า)
+      // 7. KRATHONGS IN WATER
       const currentKrathongs = [...animationState.current.krathongsState];
       currentKrathongs.sort((a, b) => a.y - b.y);
 
@@ -271,18 +278,20 @@ export default function RiverCanvas({
         k.x += k.speed;
         if (k.x > 1.15) {
           k.x = -0.15;
-          k.y = 0.52 + Math.random() * 0.38;
+          k.y = (skyHeightRatio + 0.1) + Math.random() * (1 - (skyHeightRatio + 0.2));
         }
 
-        const kScale = k.scale * (0.7 + k.y * 0.6); // Perspective: further is smaller
-        const kSize = 110 * kScale;
+        const baseKSize = Math.max(70, Math.min(w * 0.18, 110));
+        const kScale = k.scale * (0.7 + k.y * 0.6);
+        const kSize = baseKSize * kScale;
         const bob = Math.sin(t * 2 + k.bobOffset) * (3 * kScale);
         const kx = k.x * w;
         const ky = k.y * h + bob;
 
-        // Check distance to mouse
+        // Check distance to mouse or touch
+        const hitRadius = Math.max(38, kSize * 0.55); // generous touch area
         const dist = Math.hypot(kx - mouse.x, ky - mouse.y);
-        const isHovered = dist < (kSize * 0.45);
+        const isHovered = dist < hitRadius;
         if (isHovered && !foundHover) {
           foundHover = k;
         }
@@ -307,12 +316,10 @@ export default function RiverCanvas({
           ctx.save();
           ctx.translate(kx, ky);
 
-          // Subtle tilt with wave
           const tilt = Math.cos(t * 1.5 + k.bobOffset) * 0.04;
           ctx.rotate(tilt);
 
           if (isHovered) {
-            // Glowing Highlight selection ring
             ctx.shadowColor = '#fde047';
             ctx.shadowBlur = 18;
           }
@@ -323,10 +330,10 @@ export default function RiverCanvas({
 
         // Name Tag Floating above Krathong
         ctx.save();
-        ctx.font = '500 12px "Prompt", sans-serif';
+        ctx.font = '500 11px "Prompt", sans-serif';
         const nameText = k.name || 'ผู้ร่วมลอยกระทง';
         const textWidth = ctx.measureText(nameText).width;
-        const tagX = kx - textWidth / 2 - 8;
+        const tagX = kx - textWidth / 2 - 7;
         const tagY = ky - kSize * 0.55;
 
         // Tag background
@@ -334,13 +341,13 @@ export default function RiverCanvas({
         ctx.strokeStyle = isHovered ? '#fef08a' : 'rgba(253, 224, 71, 0.35)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.roundRect(tagX, tagY, textWidth + 16, 22, 11);
+        ctx.roundRect(tagX, tagY, textWidth + 14, 20, 10);
         ctx.fill();
         ctx.stroke();
 
         // Tag text
         ctx.fillStyle = isHovered ? '#0f172a' : '#fef9c3';
-        ctx.fillText(nameText, kx - textWidth / 2, tagY + 15);
+        ctx.fillText(nameText, kx - textWidth / 2, tagY + 14);
         ctx.restore();
       });
 
@@ -361,7 +368,7 @@ export default function RiverCanvas({
     };
   }, [mousePos, hoveredKrathong]);
 
-  // Handle Mouse Movements
+  // Mouse handlers
   const handleMouseMove = (e) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect) {
@@ -377,7 +384,40 @@ export default function RiverCanvas({
     setHoveredKrathong(null);
   };
 
-  // Handle Click
+  // Touch handlers for iPad & Mobile phones
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches[0]) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (rect) {
+        const tx = e.touches[0].clientX - rect.left;
+        const ty = e.touches[0].clientY - rect.top;
+        setMousePos({ x: tx, y: ty });
+      }
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches[0]) {
+      const rect = canvasRef.current?.getBoundingClientRect();
+      if (rect) {
+        const tx = e.touches[0].clientX - rect.left;
+        const ty = e.touches[0].clientY - rect.top;
+        setMousePos({ x: tx, y: ty });
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (animationState.current.hoveredItem) {
+      onSelectKrathong(animationState.current.hoveredItem);
+    }
+    // reset after small delay so tooltip can close
+    setTimeout(() => {
+      setMousePos({ x: -1000, y: -1000 });
+      setHoveredKrathong(null);
+    }, 400);
+  };
+
   const handleClick = () => {
     if (animationState.current.hoveredItem) {
       onSelectKrathong(animationState.current.hoveredItem);
@@ -385,12 +425,15 @@ export default function RiverCanvas({
   };
 
   return (
-    <div className="relative w-full h-full select-none overflow-hidden">
+    <div className="relative w-full h-full select-none overflow-hidden touch-none">
       <canvas
         ref={canvasRef}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         className={`w-full h-full block ${hoveredKrathong ? 'cursor-pointer' : 'cursor-default'}`}
       />
 
@@ -399,21 +442,21 @@ export default function RiverCanvas({
         <div 
           className="fixed pointer-events-none z-30 transition-all duration-150 transform -translate-x-1/2 -translate-y-full mb-3"
           style={{ 
-            left: `${mousePos.x}px`, 
+            left: `${Math.max(140, Math.min(window.innerWidth - 140, mousePos.x))}px`, 
             top: `${mousePos.y - 45}px` 
           }}
         >
-          <div className="bg-slate-900/95 backdrop-blur-md text-slate-100 p-3 rounded-2xl border border-amber-400/40 shadow-2xl max-w-xs text-left animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-sm font-bold text-amber-300 truncate">{hoveredKrathong.name}</span>
-              <span className="text-[10px] bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded-full border border-amber-500/30">
-                คลิกเพื่ออ่านคำขอพร 🪷
+          <div className="bg-slate-900/95 backdrop-blur-md text-slate-100 p-3 rounded-2xl border border-amber-400/40 shadow-2xl max-w-[260px] sm:max-w-xs text-left animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-1.5 mb-1">
+              <span className="text-xs sm:text-sm font-bold text-amber-300 truncate">{hoveredKrathong.name}</span>
+              <span className="text-[9px] bg-amber-500/20 text-amber-200 px-1.5 py-0.2 rounded-full border border-amber-500/30">
+                แตะเพื่ออ่าน 🪷
               </span>
             </div>
-            <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-2 leading-relaxed">
               "{hoveredKrathong.wish}"
             </p>
-            <div className="flex items-center gap-3 mt-2 text-[11px] text-amber-400/90 font-medium">
+            <div className="flex items-center gap-2.5 mt-1.5 text-[10px] sm:text-[11px] text-amber-400 font-medium">
               <span>❤️ {hoveredKrathong.likes || 0}</span>
               <span>🙏 {hoveredKrathong.blessings || 0} สาธุ</span>
             </div>
@@ -421,35 +464,35 @@ export default function RiverCanvas({
         </div>
       )}
 
-      {/* Bottom Pier / Wooden Dock Atmosphere (ท่าน้ำริมแม่น้ำ) */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none flex justify-between items-end p-4 md:p-8">
-        {/* Left Pier with Lantern */}
-        <div className="flex items-end gap-3">
-          <div className="bg-gradient-to-t from-slate-950 via-slate-900/80 to-transparent p-4 rounded-3xl border border-amber-500/20 backdrop-blur-sm shadow-xl">
-            <p className="text-xs text-amber-300 font-medium flex items-center gap-1.5">
+      {/* Bottom Pier & Action Button (Responsive for Phone Portrait, Phone Landscape, iPad Portrait, iPad Landscape) */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none flex flex-col sm:flex-row justify-between items-center sm:items-end gap-2.5 sm:gap-4 p-3 sm:p-6 md:p-8 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        {/* Pier notice card */}
+        <div className="pointer-events-auto w-full sm:w-auto">
+          <div className="bg-gradient-to-t from-slate-950 via-slate-900/85 to-slate-900/60 p-2.5 sm:p-3.5 md:p-4 rounded-2xl sm:rounded-3xl border border-amber-500/20 backdrop-blur-md shadow-xl text-center sm:text-left">
+            <p className="text-[11px] sm:text-xs text-amber-300 font-medium flex items-center justify-center sm:justify-start gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
               ประเพณีลอยกระทง คืนเพ็ญเดือน ๑๒
             </p>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
               {krathongs.length === 0 
-                ? 'ยังไม่มีกระทงในสายน้ำ กด "สร้างและลอยกระทง" เป็นคนแรกได้เลย! 🪷' 
-                : 'คลิกที่กระทงใดก็ได้ในแม่น้ำเพื่ออ่านคำขอพรและส่งกำลังใจ ❤️'}
+                ? 'ยังไม่มีกระทงในสายน้ำ แตะปุ่มด้านล่างเพื่อลอยเป็นคนแรกได้เลย! 🪷' 
+                : 'แตะที่กระทงใดก็ได้ในแม่น้ำเพื่ออ่านคำขอพรและส่งกำลังใจ ❤️'}
             </p>
           </div>
         </div>
 
-        {/* Floating Launch Button (Call to Action) */}
-        <div className="pointer-events-auto">
+        {/* Floating Launch Button (Thumb-friendly & Responsive) */}
+        <div className="pointer-events-auto w-full sm:w-auto flex justify-center sm:justify-end">
           <button
             onClick={onOpenWizard}
-            className="group relative flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold rounded-full shadow-2xl hover:shadow-amber-500/40 transform hover:-translate-y-1 active:translate-y-0 transition-all cursor-pointer border-2 border-yellow-200 text-base md:text-lg"
+            className="group relative w-full sm:w-auto flex items-center justify-center gap-2.5 sm:gap-3 px-5 py-3 sm:px-6 sm:py-3.5 md:px-7 md:py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold rounded-2xl sm:rounded-full shadow-2xl hover:shadow-amber-500/40 transform active:scale-95 transition-all cursor-pointer border border-yellow-200 text-sm sm:text-base md:text-lg"
           >
-            <span className="text-2xl group-hover:scale-125 transition-transform duration-300">🪷</span>
+            <span className="text-xl sm:text-2xl group-hover:scale-125 transition-transform duration-300">🪷</span>
             <div className="text-left">
-              <div className="leading-tight">สร้างและลอยกระทง</div>
-              <div className="text-[10px] text-amber-950/80 font-normal">เลือกตัวละคร • ปรับแต่ง • อธิษฐาน</div>
+              <div className="leading-tight font-extrabold">สร้างและลอยกระทง</div>
+              <div className="text-[9px] sm:text-[10px] text-amber-950/80 font-normal">เลือกตัวละคร • ปรับแต่ง • อธิษฐาน</div>
             </div>
-            <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></span>
+            <span className="w-2 h-2 rounded-full bg-white animate-pulse hidden sm:inline-block"></span>
           </button>
         </div>
       </div>
