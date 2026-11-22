@@ -1,0 +1,456 @@
+import React, { useRef, useEffect, useState } from 'react';
+import { getKrathongImage } from '../utils/canvasHelpers';
+
+export default function RiverCanvas({
+  krathongs = [],
+  onSelectKrathong,
+  onOpenWizard
+}) {
+  const canvasRef = useRef(null);
+  const [hoveredKrathong, setHoveredKrathong] = useState(null);
+  const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
+
+  // Keep internal mutable state for animation loop to avoid re-binding
+  const animationState = useRef({
+    krathongsState: [],
+    stars: [],
+    lanterns: [],
+    time: 0,
+    width: window.innerWidth,
+    height: window.innerHeight,
+    hoveredItem: null
+  });
+
+  // Initialize stars and lanterns
+  useEffect(() => {
+    const stars = [];
+    for (let i = 0; i < 90; i++) {
+      stars.push({
+        x: Math.random(),
+        y: Math.random() * 0.45, // Top 45% of screen
+        radius: Math.random() * 1.5 + 0.5,
+        alpha: Math.random() * 0.8 + 0.2,
+        twinkleSpeed: 0.02 + Math.random() * 0.03
+      });
+    }
+
+    const lanterns = [];
+    for (let i = 0; i < 18; i++) {
+      lanterns.push({
+        x: Math.random(),
+        y: Math.random() * 0.4,
+        size: 14 + Math.random() * 16,
+        speedY: 0.00015 + Math.random() * 0.0002,
+        swaySpeed: 0.001 + Math.random() * 0.002,
+        swayOffset: Math.random() * Math.PI * 2,
+        alpha: 0.6 + Math.random() * 0.4
+      });
+    }
+
+    animationState.current.stars = stars;
+    animationState.current.lanterns = lanterns;
+  }, []);
+
+  // Sync prop krathongs into mutable animation state
+  useEffect(() => {
+    const existingMap = new Map();
+    animationState.current.krathongsState.forEach((k) => existingMap.set(k.id, k));
+
+    const updated = krathongs.map((k, idx) => {
+      const existing = existingMap.get(k.id);
+      if (existing) {
+        return {
+          ...k,
+          x: existing.x,
+          y: existing.y,
+          speed: existing.speed,
+          scale: existing.scale,
+          bobOffset: existing.bobOffset
+        };
+      }
+      return {
+        ...k,
+        x: k.x !== undefined ? k.x : (idx * 0.14) % 1.0,
+        y: k.y !== undefined ? k.y : 0.55 + ((idx * 0.08) % 0.35),
+        speed: k.speed || (0.00025 + Math.random() * 0.0002),
+        scale: k.scale || (0.9 + Math.random() * 0.3),
+        bobOffset: Math.random() * Math.PI * 2
+      };
+    });
+
+    animationState.current.krathongsState = updated;
+  }, [krathongs]);
+
+  // Handle Resize and Animation Loop
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    const handleResize = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.scale(dpr, dpr);
+      animationState.current.width = window.innerWidth;
+      animationState.current.height = window.innerHeight;
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+
+    const render = () => {
+      animationState.current.time += 0.016;
+      const t = animationState.current.time;
+      const w = animationState.current.width;
+      const h = animationState.current.height;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // 1. SKY GRADIENT (Night time, deep indigo to purple-black)
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h * 0.5);
+      skyGrad.addColorStop(0, '#060913');
+      skyGrad.addColorStop(0.5, '#0b1329');
+      skyGrad.addColorStop(1, '#111e38');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h * 0.55);
+
+      // 2. STARS
+      animationState.current.stars.forEach((star) => {
+        const twinkle = Math.sin(t * star.twinkleSpeed * 60) * 0.3;
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, star.alpha + twinkle)})`;
+        ctx.beginPath();
+        ctx.arc(star.x * w, star.y * h, star.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 3. FULL MOON (พระจันทร์วันเพ็ญ 🌕)
+      const moonX = w * 0.82;
+      const moonY = h * 0.18;
+      const moonR = Math.min(w, h) * 0.085;
+
+      // Outer Moon Halo
+      const moonGlow = ctx.createRadialGradient(moonX, moonY, moonR * 0.8, moonX, moonY, moonR * 3.5);
+      moonGlow.addColorStop(0, 'rgba(254, 240, 138, 0.45)');
+      moonGlow.addColorStop(0.5, 'rgba(253, 224, 71, 0.15)');
+      moonGlow.addColorStop(1, 'rgba(253, 224, 71, 0)');
+      ctx.fillStyle = moonGlow;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR * 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Moon Body
+      const moonBody = ctx.createRadialGradient(moonX - moonR * 0.3, moonY - moonR * 0.3, moonR * 0.1, moonX, moonY, moonR);
+      moonBody.addColorStop(0, '#fffae0');
+      moonBody.addColorStop(0.7, '#fef08a');
+      moonBody.addColorStop(1, '#facc15');
+      ctx.fillStyle = moonBody;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Soft Moon Clouds
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+      ctx.beginPath();
+      ctx.ellipse(moonX + 15, moonY + 8, moonR * 1.4, moonR * 0.35, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 4. FLOATING SKY LANTERNS (โคมลอย)
+      animationState.current.lanterns.forEach((lantern) => {
+        lantern.y -= lantern.speedY;
+        if (lantern.y < -0.05) {
+          lantern.y = 0.48;
+          lantern.x = Math.random();
+        }
+        const swayX = Math.sin(t * lantern.swaySpeed * 100 + lantern.swayOffset) * 15;
+        const lx = lantern.x * w + swayX;
+        const ly = lantern.y * h;
+
+        // Lantern Glow
+        const lGlow = ctx.createRadialGradient(lx, ly, lantern.size * 0.2, lx, ly, lantern.size * 1.8);
+        lGlow.addColorStop(0, 'rgba(251, 146, 60, 0.5)');
+        lGlow.addColorStop(1, 'rgba(251, 146, 60, 0)');
+        ctx.fillStyle = lGlow;
+        ctx.beginPath();
+        ctx.arc(lx, ly, lantern.size * 1.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Lantern Shape
+        ctx.fillStyle = `rgba(254, 215, 170, ${lantern.alpha})`;
+        ctx.beginPath();
+        ctx.roundRect(lx - lantern.size * 0.4, ly - lantern.size * 0.6, lantern.size * 0.8, lantern.size * 1.2, 4);
+        ctx.fill();
+
+        // Lantern Flame Core
+        ctx.fillStyle = '#ffedd5';
+        ctx.beginPath();
+        ctx.arc(lx, ly + lantern.size * 0.3, lantern.size * 0.18, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // 5. DISTANT TEMPLE SHADOW & TREES SILHOUETTE (ขอบฝั่งแม่น้ำ)
+      const riverTopY = h * 0.45;
+      ctx.fillStyle = '#070b16';
+      ctx.beginPath();
+      ctx.moveTo(0, riverTopY);
+      // Gentle hills & temple pagoda silhouettes
+      for (let x = 0; x <= w; x += 40) {
+        const hill = Math.sin(x * 0.005) * 12 + Math.sin(x * 0.015) * 8;
+        ctx.lineTo(x, riverTopY - 18 + hill);
+      }
+      ctx.lineTo(w, riverTopY);
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fill();
+
+      // Distant Pagoda (เจดีย์ริมน้ำ)
+      const pagodaX = w * 0.35;
+      ctx.fillStyle = '#060913';
+      ctx.beginPath();
+      ctx.moveTo(pagodaX - 25, riverTopY - 10);
+      ctx.lineTo(pagodaX - 15, riverTopY - 35);
+      ctx.lineTo(pagodaX - 6, riverTopY - 70);
+      ctx.lineTo(pagodaX, riverTopY - 95); // spire
+      ctx.lineTo(pagodaX + 6, riverTopY - 70);
+      ctx.lineTo(pagodaX + 15, riverTopY - 35);
+      ctx.lineTo(pagodaX + 25, riverTopY - 10);
+      ctx.closePath();
+      ctx.fill();
+
+      // Golden spire tip glow
+      ctx.fillStyle = 'rgba(253, 224, 71, 0.4)';
+      ctx.beginPath();
+      ctx.arc(pagodaX, riverTopY - 95, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 6. RIVER WATER (แม่น้ำเจ้าพระยา/สายธารคืนวันเพ็ญ)
+      const riverGrad = ctx.createLinearGradient(0, riverTopY, 0, h);
+      riverGrad.addColorStop(0, '#0c1a30');
+      riverGrad.addColorStop(0.3, '#091b35');
+      riverGrad.addColorStop(0.7, '#07162b');
+      riverGrad.addColorStop(1, '#051020');
+      ctx.fillStyle = riverGrad;
+      ctx.fillRect(0, riverTopY, w, h - riverTopY);
+
+      // Moon Reflection on Water (แสงจันทร์พาดผ่านผืนน้ำ)
+      const moonReflectGrad = ctx.createLinearGradient(moonX - 70, 0, moonX + 70, 0);
+      moonReflectGrad.addColorStop(0, 'rgba(253, 224, 71, 0)');
+      moonReflectGrad.addColorStop(0.5, 'rgba(254, 240, 138, 0.12)');
+      moonReflectGrad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+      ctx.fillStyle = moonReflectGrad;
+      ctx.fillRect(moonX - 80, riverTopY, 160, h - riverTopY);
+
+      // Shimmering Water Waves (ระลอกคลื่นน้ำสะท้อนแสง)
+      for (let waveIdx = 0; waveIdx < 16; waveIdx++) {
+        const wy = riverTopY + (waveIdx / 16) * (h - riverTopY);
+        const waveSpeed = 0.8 + waveIdx * 0.1;
+        ctx.strokeStyle = `rgba(147, 197, 253, ${0.04 + (waveIdx / 16) * 0.08})`;
+        ctx.lineWidth = 1.2 + (waveIdx / 16) * 1.5;
+        ctx.beginPath();
+        for (let wx = 0; wx <= w; wx += 50) {
+          const waveHeight = Math.sin(wx * 0.015 + t * waveSpeed + waveIdx) * (3 + waveIdx * 0.4);
+          if (wx === 0) ctx.moveTo(wx, wy + waveHeight);
+          else ctx.lineTo(wx, wy + waveHeight);
+        }
+        ctx.stroke();
+      }
+
+      // 7. KRATHONGS IN WATER (เรียงตามแกน Y เพื่อให้กระทงที่อยู่ลึกกว่าอยู่ด้านหน้า)
+      const currentKrathongs = [...animationState.current.krathongsState];
+      currentKrathongs.sort((a, b) => a.y - b.y);
+
+      let foundHover = null;
+      const mouse = mousePos;
+
+      currentKrathongs.forEach((k) => {
+        // Drift forward with river flow
+        k.x += k.speed;
+        if (k.x > 1.15) {
+          k.x = -0.15;
+          k.y = 0.52 + Math.random() * 0.38;
+        }
+
+        const kScale = k.scale * (0.7 + k.y * 0.6); // Perspective: further is smaller
+        const kSize = 110 * kScale;
+        const bob = Math.sin(t * 2 + k.bobOffset) * (3 * kScale);
+        const kx = k.x * w;
+        const ky = k.y * h + bob;
+
+        // Check distance to mouse
+        const dist = Math.hypot(kx - mouse.x, ky - mouse.y);
+        const isHovered = dist < (kSize * 0.45);
+        if (isHovered && !foundHover) {
+          foundHover = k;
+        }
+
+        // Draw Water Light Reflection under Krathong
+        const flameConfig = k.flameColor === 'rose' ? 'rgba(251, 113, 133, ' :
+                           k.flameColor === 'cyan' ? 'rgba(56, 189, 248, ' :
+                           k.flameColor === 'purple' ? 'rgba(192, 132, 252, ' : 'rgba(255, 170, 0, ';
+        
+        const reflGrad = ctx.createRadialGradient(kx, ky + kSize * 0.35, kSize * 0.1, kx, ky + kSize * 0.35, kSize * 0.9);
+        reflGrad.addColorStop(0, flameConfig + '0.45)');
+        reflGrad.addColorStop(0.6, flameConfig + '0.12)');
+        reflGrad.addColorStop(1, flameConfig + '0)');
+        ctx.fillStyle = reflGrad;
+        ctx.beginPath();
+        ctx.ellipse(kx, ky + kSize * 0.35, kSize * 0.85, kSize * 0.28, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw Krathong SVG Image
+        const img = getKrathongImage(k.style, k.flameColor);
+        if (img && img.complete) {
+          ctx.save();
+          ctx.translate(kx, ky);
+
+          // Subtle tilt with wave
+          const tilt = Math.cos(t * 1.5 + k.bobOffset) * 0.04;
+          ctx.rotate(tilt);
+
+          if (isHovered) {
+            // Glowing Highlight selection ring
+            ctx.shadowColor = '#fde047';
+            ctx.shadowBlur = 18;
+          }
+
+          ctx.drawImage(img, -kSize / 2, -kSize / 2, kSize, kSize);
+          ctx.restore();
+        }
+
+        // Name Tag Floating above Krathong
+        ctx.save();
+        ctx.font = '500 12px "Prompt", sans-serif';
+        const nameText = k.name || 'ผู้ร่วมลอยกระทง';
+        const textWidth = ctx.measureText(nameText).width;
+        const tagX = kx - textWidth / 2 - 8;
+        const tagY = ky - kSize * 0.55;
+
+        // Tag background
+        ctx.fillStyle = isHovered ? 'rgba(245, 158, 11, 0.92)' : 'rgba(15, 23, 42, 0.75)';
+        ctx.strokeStyle = isHovered ? '#fef08a' : 'rgba(253, 224, 71, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(tagX, tagY, textWidth + 16, 22, 11);
+        ctx.fill();
+        ctx.stroke();
+
+        // Tag text
+        ctx.fillStyle = isHovered ? '#0f172a' : '#fef9c3';
+        ctx.fillText(nameText, kx - textWidth / 2, tagY + 15);
+        ctx.restore();
+      });
+
+      // Update hover state
+      animationState.current.hoveredItem = foundHover;
+      if (foundHover?.id !== hoveredKrathong?.id) {
+        setHoveredKrathong(foundHover);
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [mousePos, hoveredKrathong]);
+
+  // Handle Mouse Movements
+  const handleMouseMove = (e) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (rect) {
+      setMousePos({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setMousePos({ x: -1000, y: -1000 });
+    setHoveredKrathong(null);
+  };
+
+  // Handle Click
+  const handleClick = () => {
+    if (animationState.current.hoveredItem) {
+      onSelectKrathong(animationState.current.hoveredItem);
+    }
+  };
+
+  return (
+    <div className="relative w-full h-full select-none overflow-hidden">
+      <canvas
+        ref={canvasRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        className={`w-full h-full block ${hoveredKrathong ? 'cursor-pointer' : 'cursor-default'}`}
+      />
+
+      {/* Floating Interactive Hover Tooltip */}
+      {hoveredKrathong && (
+        <div 
+          className="fixed pointer-events-none z-30 transition-all duration-150 transform -translate-x-1/2 -translate-y-full mb-3"
+          style={{ 
+            left: `${mousePos.x}px`, 
+            top: `${mousePos.y - 45}px` 
+          }}
+        >
+          <div className="bg-slate-900/95 backdrop-blur-md text-slate-100 p-3 rounded-2xl border border-amber-400/40 shadow-2xl max-w-xs text-left animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-sm font-bold text-amber-300 truncate">{hoveredKrathong.name}</span>
+              <span className="text-[10px] bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded-full border border-amber-500/30">
+                คลิกเพื่ออ่านคำขอพร 🪷
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+              "{hoveredKrathong.wish}"
+            </p>
+            <div className="flex items-center gap-3 mt-2 text-[11px] text-amber-400/90 font-medium">
+              <span>❤️ {hoveredKrathong.likes || 0}</span>
+              <span>🙏 {hoveredKrathong.blessings || 0} สาธุ</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Pier / Wooden Dock Atmosphere (ท่าน้ำริมแม่น้ำ) */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none flex justify-between items-end p-4 md:p-8">
+        {/* Left Pier with Lantern */}
+        <div className="flex items-end gap-3">
+          <div className="bg-gradient-to-t from-slate-950 via-slate-900/80 to-transparent p-4 rounded-3xl border border-amber-500/20 backdrop-blur-sm shadow-xl">
+            <p className="text-xs text-amber-300 font-medium flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+              ประเพณีลอยกระทง คืนเพ็ญเดือน ๑๒
+            </p>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              คลิกที่กระทงใดก็ได้ในแม่น้ำเพื่ออ่านคำขอพรและส่งกำลังใจ ❤️
+            </p>
+          </div>
+        </div>
+
+        {/* Floating Launch Button (Call to Action) */}
+        <div className="pointer-events-auto">
+          <button
+            onClick={onOpenWizard}
+            className="group relative flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold rounded-full shadow-2xl hover:shadow-amber-500/40 transform hover:-translate-y-1 active:translate-y-0 transition-all cursor-pointer border-2 border-yellow-200 text-base md:text-lg"
+          >
+            <span className="text-2xl group-hover:scale-125 transition-transform duration-300">🪷</span>
+            <div className="text-left">
+              <div className="leading-tight">สร้างและลอยกระทง</div>
+              <div className="text-[10px] text-amber-950/80 font-normal">เลือกตัวละคร • ปรับแต่ง • อธิษฐาน</div>
+            </div>
+            <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

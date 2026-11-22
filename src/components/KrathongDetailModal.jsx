@@ -1,0 +1,143 @@
+import React, { useState } from 'react';
+import { X, Heart, Sparkles } from 'lucide-react';
+import CharacterPreview from './CharacterPreview';
+import KrathongSVG from './KrathongSVG';
+import confetti from 'canvas-confetti';
+
+export default function KrathongDetailModal({ krathong, onClose, onReact }) {
+  const [hasLiked, setHasLiked] = useState(false);
+  const [hasBlessed, setHasBlessed] = useState(false);
+
+  if (!krathong) return null;
+
+  const handleLike = () => {
+    onReact(krathong.id, 'like');
+    setHasLiked(true);
+    try {
+      confetti({
+        particleCount: 25,
+        spread: 45,
+        origin: { y: 0.6 },
+        colors: ['#f43f5e', '#fb7185', '#fda4af']
+      });
+    } catch (e) {}
+  };
+
+  const handleBless = () => {
+    onReact(krathong.id, 'blessing');
+    setHasBlessed(true);
+    try {
+      confetti({
+        particleCount: 35,
+        spread: 60,
+        origin: { y: 0.6 },
+        colors: ['#facc15', '#fde047', '#fef08a']
+      });
+    } catch (e) {}
+  };
+
+  // Format relative time
+  const getTimeString = () => {
+    if (!krathong.timestamp) return 'คืนนี้';
+    const diffMins = Math.floor((Date.now() - krathong.timestamp) / (1000 * 60));
+    if (diffMins < 1) return 'เมื่อสักครู่';
+    if (diffMins < 60) return `เมื่อ ${diffMins} นาทีที่แล้ว`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `เมื่อ ${diffHours} ชั่วโมงที่แล้ว`;
+    return 'เมื่อวานนี้';
+  };
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-md bg-slate-900 border border-amber-500/40 rounded-3xl shadow-2xl overflow-hidden p-6 text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+        >
+          <X size={20} />
+        </button>
+
+        {/* Top Header: Character & Krathong in harmony */}
+        <div className="flex items-center justify-center gap-2 mb-4 pt-2">
+          {krathong.character ? (
+            <CharacterPreview
+              gender={krathong.character.gender}
+              outfitColor={krathong.character.outfitColor}
+              skinTone={krathong.character.skinTone}
+              size={90}
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center text-2xl">
+              🧑
+            </div>
+          )}
+          
+          <div className="text-amber-400 text-xl font-bold animate-pulse">~</div>
+
+          <div className="p-1">
+            <KrathongSVG
+              style={krathong.style || 'banana-leaf'}
+              flameColor={krathong.flameColor || 'gold'}
+              size={100}
+              animated={true}
+            />
+          </div>
+        </div>
+
+        {/* Author Name & Time */}
+        <h3 className="text-lg font-bold text-amber-200">
+          กระทงของ {krathong.name || 'เพื่อนร่วมสายน้ำ'}
+        </h3>
+        <p className="text-xs text-slate-400 mt-0.5">
+          ลอยสู่แม่น้ำ {getTimeString()}
+        </p>
+
+        {/* Wish Quote Box */}
+        <div className="my-5 p-4 bg-gradient-to-b from-slate-950/80 to-slate-900/90 rounded-2xl border border-amber-400/20 shadow-inner relative text-left">
+          <span className="absolute -top-3 left-4 px-2 py-0.5 bg-amber-500 text-slate-950 text-[10px] font-bold rounded-full">
+            คำอธิษฐาน 🪷
+          </span>
+          <p className="text-slate-200 text-sm md:text-base leading-relaxed italic font-mali mt-1">
+            "{krathong.wish}"
+          </p>
+        </div>
+
+        {/* Reaction Buttons (Heart & Blessing) */}
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <button
+            type="button"
+            onClick={handleLike}
+            className={`flex-1 py-2.5 px-4 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              hasLiked
+                ? 'bg-rose-500/20 border-rose-500 text-rose-300 shadow-md'
+                : 'bg-slate-800/80 hover:bg-rose-500/10 border-slate-700 hover:border-rose-400/50 text-slate-300'
+            }`}
+          >
+            <Heart size={16} className={hasLiked ? 'fill-rose-400 text-rose-400 animate-bounce' : 'text-rose-400'} />
+            <span>ส่งใจ ({krathong.likes || 0})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleBless}
+            className={`flex-1 py-2.5 px-4 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              hasBlessed
+                ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-md'
+                : 'bg-slate-800/80 hover:bg-amber-500/10 border-slate-700 hover:border-amber-400/50 text-slate-300'
+            }`}
+          >
+            <Sparkles size={16} className={hasBlessed ? 'text-amber-400 animate-spin' : 'text-amber-400'} />
+            <span>สาธุ อนุโมทนา ({krathong.blessings || 0})</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
