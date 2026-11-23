@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import RiverCanvas from './components/RiverCanvas';
 import HeaderControls from './components/HeaderControls';
 import LaunchWizard from './components/LaunchModal/LaunchWizard';
@@ -7,7 +8,9 @@ import FirebaseConfigModal from './components/FirebaseConfigModal';
 import AboutModal from './components/AboutModal';
 import ProfileModal from './components/ProfileModal';
 import TempleFairView from './components/TempleFairView';
+import IncomingInviteModal from './components/IncomingInviteModal';
 import { useKrathongStore } from './services/krathongStore';
+import { presenceService } from './services/presenceService';
 import { INITIAL_ONLINE_VISITORS } from './data/onlineVisitors';
 
 const PROFILE_STORAGE_KEY = 'loy_krathong_my_profile';
@@ -25,7 +28,14 @@ export default function App() {
   const [myProfile, setMyProfile] = useState(() => {
     try {
       const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (!parsed.id) {
+          parsed.id = 'u_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
+          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(parsed));
+        }
+        return parsed;
+      }
     } catch (e) {
       console.error(e);
     }
@@ -42,15 +52,68 @@ export default function App() {
   const [isFirebaseConfigOpen, setIsFirebaseConfigOpen] = useState(false);
   const [isAboutOpen, setIsAboutOpen] = useState(false);
 
-  // Online Visitors in Temple Fair
+  // Online Real Visitors in Temple Fair
   const [onlineVisitors, setOnlineVisitors] = useState(INITIAL_ONLINE_VISITORS);
+
+  // Couple Invitation States (Waiting for acceptance)
+  const [incomingInvite, setIncomingInvite] = useState(null);
+  const [outgoingInviteStatus, setOutgoingInviteStatus] = useState(null); // { status: 'waiting'|'accepted'|'rejected', partner, inviteId }
+
+  // Sync real-time presence & invitations
+  useEffect(() => {
+    if (!myProfile) return;
+
+    presenceService.start(myProfile, {
+      onVisitorsChange: (list) => {
+        setOnlineVisitors(list);
+      },
+      onIncomingInvite: (invite) => {
+        setIncomingInvite(invite);
+      },
+      onInviteResponse: ({ inviteId, status, fromUser }) => {
+        if (status === 'accepted') {
+          setOutgoingInviteStatus({
+            status: 'accepted',
+            partner: fromUser,
+            inviteId
+          });
+          try {
+            confetti({
+              particleCount: 65,
+              spread: 80,
+              origin: { y: 0.6 },
+              colors: ['#f43f5e', '#fb7185', '#fda4af', '#facc15', '#fde047']
+            });
+          } catch (e) {}
+          setTimeout(() => {
+            setOutgoingInviteStatus(null);
+            handleFloatCouple(fromUser);
+          }, 1200);
+        } else if (status === 'rejected') {
+          setOutgoingInviteStatus({
+            status: 'rejected',
+            partner: fromUser,
+            inviteId
+          });
+        }
+      }
+    });
+
+    return () => {
+      presenceService.stop();
+    };
+  }, [myProfile]);
 
   // Handle Saving Profile
   const handleSaveProfile = (profileData) => {
-    setMyProfile(profileData);
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profileData));
+    const dataWithId = {
+      ...profileData,
+      id: profileData.id || myProfile?.id || 'u_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7)
+    };
+    setMyProfile(dataWithId);
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(dataWithId));
     setIsProfileModalOpen(false);
-    setCurrentView('temple-fair'); // Take them straight to the Temple Fair
+    setCurrentView('temple-fair');
   };
 
   // Trigger Floating Solo
@@ -71,6 +134,34 @@ export default function App() {
     }
     setWizardPartner(partner);
     setIsWizardOpen(true);
+  };
+
+  // Couple Invitation Handlers
+  const handleSendInvite = (targetUser) => {
+    const invite = presenceService.sendInvite(targetUser);
+    setOutgoingInviteStatus({
+      status: 'waiting',
+      partner: targetUser,
+      inviteId: invite?.id
+    });
+  };
+
+  const handleCancelInvite = () => {
+    if (outgoingInviteStatus?.inviteId && outgoingInviteStatus?.partner) {
+      presenceService.cancelInvite(outgoingInviteStatus.inviteId, outgoingInviteStatus.partner.id);
+    }
+    setOutgoingInviteStatus(null);
+  };
+
+  const handleAcceptIncomingInvite = (invite) => {
+    presenceService.respondInvite(invite, 'accepted');
+    setIncomingInvite(null);
+    handleFloatCouple(invite.from);
+  };
+
+  const handleDeclineIncomingInvite = (invite) => {
+    presenceService.respondInvite(invite, 'rejected');
+    setIncomingInvite(null);
   };
 
   // Handle Launch Krathong (Add to river & switch to river view)
@@ -107,6 +198,10 @@ export default function App() {
           onFloatCouple={handleFloatCouple}
           onGoToRiver={() => setCurrentView('river')}
           onEditProfile={() => setIsProfileModalOpen(true)}
+          onSendInvite={handleSendInvite}
+          onCancelInvite={handleCancelInvite}
+          outgoingInviteStatus={outgoingInviteStatus}
+          onClearOutgoingInvite={() => setOutgoingInviteStatus(null)}
         />
       )}
 
@@ -136,6 +231,14 @@ export default function App() {
         onLaunch={handleLaunchKrathong}
         myProfile={myProfile}
         partner={wizardPartner}
+      />
+
+      {/* INCOMING COUPLE INVITATION MODAL (รออีกฝ่ายกดยอมรับ) */}
+      <IncomingInviteModal
+        invite={incomingInvite}
+        myProfile={myProfile}
+        onAccept={handleAcceptIncomingInvite}
+        onDecline={handleDeclineIncomingInvite}
       />
 
       {/* KRATHONG DETAIL VIEW (Reading Wishes & Reactions) */}

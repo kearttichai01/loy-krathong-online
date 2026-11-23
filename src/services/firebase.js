@@ -3,10 +3,13 @@ import {
   getDatabase, 
   ref, 
   push, 
+  set,
+  remove,
   onChildAdded, 
   onValue, 
   update, 
   increment,
+  onDisconnect,
   query,
   limitToLast
 } from 'firebase/database';
@@ -113,4 +116,81 @@ export const reactToFirebaseKrathong = async (id, reactionType) => {
     updatePayload.blessings = increment(1);
   }
   await update(targetRef, updatePayload);
+};
+
+// Real-time Presence in Temple Fair
+export const setFirebasePresence = async (user) => {
+  if (!db || !user?.id) return;
+  try {
+    const userRef = ref(db, `presence/${user.id}`);
+    await set(userRef, {
+      ...user,
+      lastSeen: Date.now()
+    });
+    try {
+      await onDisconnect(userRef).remove();
+    } catch (e) {}
+  } catch (err) {
+    console.warn('Firebase presence warning:', err);
+  }
+};
+
+export const removeFirebasePresence = async (userId) => {
+  if (!db || !userId) return;
+  try {
+    await remove(ref(db, `presence/${userId}`));
+  } catch (e) {}
+};
+
+export const subscribeToFirebasePresence = (onPresenceChange) => {
+  if (!db) return () => {};
+  const presenceRef = ref(db, 'presence');
+  const unsubscribe = onValue(presenceRef, (snapshot) => {
+    const val = snapshot.val() || {};
+    const list = Object.values(val);
+    onPresenceChange(list);
+  });
+  return () => {
+    try {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    } catch (e) {}
+  };
+};
+
+// Real-time Invitations
+export const sendFirebaseInvite = async (invite) => {
+  if (!db || !invite?.toUserId) return;
+  try {
+    const inviteRef = ref(db, `invites/${invite.toUserId}/${invite.id}`);
+    await set(inviteRef, invite);
+  } catch (e) {}
+};
+
+export const updateFirebaseInviteStatus = async (toUserId, inviteId, status) => {
+  if (!db || !toUserId || !inviteId) return;
+  try {
+    const inviteRef = ref(db, `invites/${toUserId}/${inviteId}`);
+    await update(inviteRef, { status, respondedAt: Date.now() });
+  } catch (e) {}
+};
+
+export const subscribeToFirebaseInvites = (myUserId, onInvite, onResponse) => {
+  if (!db || !myUserId) return () => {};
+  const invitesRef = ref(db, `invites/${myUserId}`);
+  const unsubscribe = onValue(invitesRef, (snapshot) => {
+    const val = snapshot.val();
+    if (!val) return;
+    Object.entries(val).forEach(([inviteId, data]) => {
+      if (data.status === 'pending' && onInvite) {
+        onInvite(data);
+      } else if ((data.status === 'accepted' || data.status === 'rejected') && onResponse) {
+        onResponse(data);
+      }
+    });
+  });
+  return () => {
+    try {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    } catch (e) {}
+  };
 };
