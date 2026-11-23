@@ -20,6 +20,7 @@ export default function App() {
     krathongs,
     addKrathong,
     reactToKrathong,
+    clearAllKrathongs,
     isLiveFirebase,
     setIsLiveFirebase
   } = useKrathongStore();
@@ -186,6 +187,7 @@ export default function App() {
         currentView={currentView}
         onToggleView={() => setCurrentView((prev) => (prev === 'temple-fair' ? 'river' : 'temple-fair'))}
         onEditProfile={() => setIsProfileModalOpen(true)}
+        onClearKrathongs={clearAllKrathongs}
         myProfile={myProfile}
       />
 

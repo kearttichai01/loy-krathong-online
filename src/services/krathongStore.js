@@ -9,7 +9,12 @@ import {
   getStoredFirebaseConfig
 } from './firebase';
 
-const LOCAL_STORAGE_KEY = 'loy_krathong_local_list';
+const LOCAL_STORAGE_KEY = 'loy_krathong_river_v1';
+
+// Clear any previous test session data automatically
+try {
+  localStorage.removeItem('loy_krathong_local_list');
+} catch (e) {}
 
 // Helper to get stored local krathongs
 const getStoredLocalKrathongs = () => {
@@ -139,11 +144,21 @@ export function useKrathongStore() {
     }
   };
 
+  // Clear all krathongs from river
+  const clearAllKrathongs = () => {
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem('loy_krathong_local_list');
+    } catch (e) {}
+    setKrathongs([]);
+  };
+
   return {
     krathongs,
     setKrathongs,
     addKrathong,
     reactToKrathong,
+    clearAllKrathongs,
     isLiveFirebase,
     setIsLiveFirebase
   };

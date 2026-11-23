@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Database, Info, Sparkles, Waves, Tent, User } from 'lucide-react';
+import { Volume2, VolumeX, Database, Info, Sparkles, Waves, Tent, User, Trash2 } from 'lucide-react';
 import { audioService } from '../services/audioService';
 import CharacterPreview from './CharacterPreview';
 
@@ -11,6 +11,7 @@ export default function HeaderControls({
   currentView = 'temple-fair',
   onToggleView,
   onEditProfile,
+  onClearKrathongs,
   myProfile
 }) {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -85,9 +86,22 @@ export default function HeaderControls({
         )}
 
         {/* Floating Count Badge */}
-        <div className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/60 backdrop-blur-md text-[11px] sm:text-xs text-slate-300 shadow-sm">
+        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/60 backdrop-blur-md text-[11px] sm:text-xs text-slate-300 shadow-sm">
           <Sparkles size={13} className="text-amber-400" />
           <span>ลอยอยู่: <strong className="text-amber-300">{krathongCount}</strong></span>
+          {onClearKrathongs && krathongCount > 0 && (
+            <button
+              onClick={() => {
+                if (window.confirm('คุณต้องการนำกระทงทั้งหมดออกจากแม่น้ำเพื่อเริ่มใหม่หรือไม่?')) {
+                  onClearKrathongs();
+                }
+              }}
+              title="ล้างกระทงทั้งหมดในแม่น้ำเพื่อเริ่มใหม่"
+              className="text-[10px] text-slate-400 hover:text-rose-400 p-0.5 rounded cursor-pointer transition-colors ml-0.5"
+            >
+              <Trash2 size={12} />
+            </button>
+          )}
         </div>
 
         {/* Audio Toggle */}
