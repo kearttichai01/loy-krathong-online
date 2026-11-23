@@ -93,7 +93,12 @@ export const subscribeToFirebaseKrathongs = (onAdd, onUpdate) => {
   });
 
   return () => {
-    // Firebase unsubscribe
+    try {
+      if (typeof unsubscribeAdd === 'function') unsubscribeAdd();
+      if (typeof unsubscribeUpdate === 'function') unsubscribeUpdate();
+    } catch (e) {
+      console.warn('Firebase unsubscribe error:', e);
+    }
   };
 };
 

@@ -18,35 +18,8 @@ export default function TempleFairView({
       {/* 1. Animated Temple Fair Background Canvas */}
       <TempleFairCanvas />
 
-      {/* 2. Top Navigation & Header */}
-      <div className="relative z-10 px-4 py-3 sm:px-8 sm:py-4 flex items-center justify-between bg-slate-950/40 backdrop-blur-sm border-b border-amber-500/20">
-        <div className="flex items-center gap-2.5">
-          <span className="text-2xl sm:text-3xl animate-bounce">🎪</span>
-          <div>
-            <h1 className="text-sm sm:text-lg font-bold text-amber-200 flex items-center gap-2">
-              <span>ลานงานวัดริมน้ำ</span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                ออนไลน์อยู่
-              </span>
-            </h1>
-            <p className="text-[10px] sm:text-xs text-slate-400">
-              พบปะผู้คน ชวนกันลอยกระทงคู่ หรือเลือกลอยคนเดียวอย่างสบายใจ
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={onGoToRiver}
-          className="flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-amber-500/40 text-xs text-amber-300 font-semibold shadow-md transition-all active:scale-95 cursor-pointer"
-        >
-          <Waves size={15} />
-          <span>ไปที่แม่น้ำ 🌊</span>
-        </button>
-      </div>
-
-      {/* 3. Center Interactive Area */}
-      <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4 sm:px-8 sm:py-6 flex flex-col items-center max-w-5xl mx-auto w-full">
+      {/* 2. Center Interactive Area */}
+      <div className="relative z-10 flex-1 overflow-y-auto px-4 pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] pb-4 sm:pt-20 sm:pb-6 flex flex-col items-center max-w-5xl mx-auto w-full">
         {/* Your Character Showcase Card */}
         <div className="w-full max-w-xl p-3.5 sm:p-4 bg-gradient-to-r from-slate-950/90 via-slate-900/90 to-slate-950/90 rounded-2xl border border-amber-400/40 shadow-2xl backdrop-blur-md mb-6 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -132,8 +105,8 @@ export default function TempleFairView({
         </div>
       </div>
 
-      {/* 4. Bottom Action Bar */}
-      <div className="relative z-10 p-4 sm:p-6 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent border-t border-slate-800/60 backdrop-blur-md flex flex-col sm:flex-row items-center justify-center gap-3">
+      {/* 3. Bottom Action Bar */}
+      <div className="relative z-10 px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent border-t border-slate-800/60 backdrop-blur-md flex flex-col sm:flex-row items-center justify-center gap-3">
         <button
           onClick={onFloatSolo}
           className="w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold rounded-2xl shadow-xl hover:shadow-amber-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base border border-yellow-200 active:scale-95"
@@ -156,7 +129,7 @@ export default function TempleFairView({
           onClick={() => setSelectedPartner(null)}
         >
           <div 
-            className="relative w-full max-w-md bg-slate-900 border border-amber-500/50 rounded-3xl shadow-2xl p-6 text-center"
+            className="relative w-full max-w-md max-h-[88dvh] overflow-y-auto bg-slate-900 border border-amber-500/50 rounded-3xl shadow-2xl p-5 sm:p-6 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-3xl mb-2 animate-bounce">💑</div>

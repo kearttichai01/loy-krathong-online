@@ -9,7 +9,8 @@ export default function RiverCanvas({
 }) {
   const canvasRef = useRef(null);
   const [hoveredKrathong, setHoveredKrathong] = useState(null);
-  const [mousePos, setMousePos] = useState({ x: -1000, y: -1000 });
+  const mouseRef = useRef({ x: -1000, y: -1000 });
+  const [tooltipPos, setTooltipPos] = useState({ x: -1000, y: -1000 });
 
   // Keep internal mutable state for animation loop to avoid re-binding
   const animationState = useRef({
@@ -17,9 +18,11 @@ export default function RiverCanvas({
     stars: [],
     lanterns: [],
     time: 0,
+    lastTime: performance.now(),
     width: window.innerWidth,
     height: window.innerHeight,
-    hoveredItem: null
+    hoveredItem: null,
+    lastHoveredId: null
   });
 
   // Initialize stars and lanterns
@@ -103,14 +106,16 @@ export default function RiverCanvas({
       animationState.current.height = h;
     };
 
+    const handleOrientation = () => setTimeout(handleResize, 150);
     handleResize();
     window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', () => {
-      setTimeout(handleResize, 150);
-    });
+    window.addEventListener('orientationchange', handleOrientation);
 
     const render = () => {
-      animationState.current.time += 0.016;
+      const now = performance.now();
+      const dt = Math.min((now - animationState.current.lastTime) / 1000, 0.05);
+      animationState.current.lastTime = now;
+      animationState.current.time += dt;
       const t = animationState.current.time;
       const w = animationState.current.width;
       const h = animationState.current.height;
@@ -272,7 +277,7 @@ export default function RiverCanvas({
       currentKrathongs.sort((a, b) => a.y - b.y);
 
       let foundHover = null;
-      const mouse = mousePos;
+      const mouse = mouseRef.current;
 
       currentKrathongs.forEach((k) => {
         // Drift forward with river flow
@@ -359,8 +364,12 @@ export default function RiverCanvas({
 
       // Update hover state
       animationState.current.hoveredItem = foundHover;
-      if (foundHover?.id !== hoveredKrathong?.id) {
+      if (foundHover?.id !== animationState.current.lastHoveredId) {
+        animationState.current.lastHoveredId = foundHover?.id || null;
         setHoveredKrathong(foundHover);
+        if (foundHover) {
+          setTooltipPos({ x: mouse.x, y: mouse.y });
+        }
       }
 
       animationFrameId = requestAnimationFrame(render);
@@ -370,24 +379,26 @@ export default function RiverCanvas({
 
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleOrientation);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [mousePos, hoveredKrathong]);
+  }, []); // Decoupled from pointer moves!
 
   // Mouse handlers
   const handleMouseMove = (e) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (rect) {
-      setMousePos({
+      mouseRef.current = {
         x: e.clientX - rect.left,
         y: e.clientY - rect.top
-      });
+      };
     }
   };
 
   const handleMouseLeave = () => {
-    setMousePos({ x: -1000, y: -1000 });
+    mouseRef.current = { x: -1000, y: -1000 };
     setHoveredKrathong(null);
+    animationState.current.lastHoveredId = null;
   };
 
   // Touch handlers for iPad & Mobile phones
@@ -397,7 +408,7 @@ export default function RiverCanvas({
       if (rect) {
         const tx = e.touches[0].clientX - rect.left;
         const ty = e.touches[0].clientY - rect.top;
-        setMousePos({ x: tx, y: ty });
+        mouseRef.current = { x: tx, y: ty };
       }
     }
   };
@@ -408,7 +419,7 @@ export default function RiverCanvas({
       if (rect) {
         const tx = e.touches[0].clientX - rect.left;
         const ty = e.touches[0].clientY - rect.top;
-        setMousePos({ x: tx, y: ty });
+        mouseRef.current = { x: tx, y: ty };
       }
     }
   };
@@ -417,10 +428,10 @@ export default function RiverCanvas({
     if (animationState.current.hoveredItem) {
       onSelectKrathong(animationState.current.hoveredItem);
     }
-    // reset after small delay so tooltip can close
     setTimeout(() => {
-      setMousePos({ x: -1000, y: -1000 });
+      mouseRef.current = { x: -1000, y: -1000 };
       setHoveredKrathong(null);
+      animationState.current.lastHoveredId = null;
     }, 400);
   };
 
@@ -448,8 +459,8 @@ export default function RiverCanvas({
         <div 
           className="fixed pointer-events-none z-30 transition-all duration-150 transform -translate-x-1/2 -translate-y-full mb-3"
           style={{ 
-            left: `${Math.max(140, Math.min(window.innerWidth - 140, mousePos.x))}px`, 
-            top: `${mousePos.y - 45}px` 
+            left: `${Math.max(140, Math.min(window.innerWidth - 140, tooltipPos.x))}px`, 
+            top: `${tooltipPos.y - 45}px` 
           }}
         >
           <div className="bg-slate-900/95 backdrop-blur-md text-slate-100 p-3 rounded-2xl border border-amber-400/40 shadow-2xl max-w-[260px] sm:max-w-xs text-left animate-in fade-in zoom-in-95 duration-150">

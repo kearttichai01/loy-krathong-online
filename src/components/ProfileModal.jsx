@@ -116,7 +116,8 @@ export default function ProfileModal({
           {canClose && onClose && (
             <button
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-100 p-1 rounded-full hover:bg-slate-800"
+              aria-label="Close"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-100 rounded-full hover:bg-slate-800 transition-colors cursor-pointer"
             >
               ✕
             </button>

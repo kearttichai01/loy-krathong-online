@@ -101,9 +101,13 @@ export function useKrathongStore() {
       }
     }
 
-    // Save to local storage cache
-    const currentLocals = getStoredLocalKrathongs();
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([fullKrathong, ...currentLocals].slice(0, 30)));
+    // Save to local storage cache safely
+    try {
+      const currentLocals = getStoredLocalKrathongs();
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([fullKrathong, ...currentLocals].slice(0, 30)));
+    } catch (err) {
+      console.warn('Local storage write skipped or full:', err);
+    }
 
     setKrathongs((prev) => [fullKrathong, ...prev]);
     return fullKrathong;

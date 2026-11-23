@@ -131,6 +131,11 @@ class SoundController {
       } catch (e) {}
       this.whiteNoiseNode = null;
     }
+    if (this.ctx && this.ctx.state === 'running') {
+      try {
+        this.ctx.suspend();
+      } catch (e) {}
+    }
   }
 
   toggle() {

@@ -59,9 +59,10 @@ export default function KrathongDetailModal({ krathong, onClose, onReact }) {
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 rounded-full text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors"
+          aria-label="Close"
+          className="absolute top-2 right-2 sm:top-3 sm:right-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
         >
-          <X size={18} />
+          <X size={20} />
         </button>
 
         {/* Top Header: Character(s) & Krathong in harmony */}
