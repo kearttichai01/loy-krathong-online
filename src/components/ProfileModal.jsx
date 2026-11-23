@@ -140,12 +140,14 @@ export default function ProfileModal({
               outfitColor={character.outfitColor}
               skinTone={character.skinTone}
               photoUrl={avatarMode === 'photo' ? photoUrl : null}
-              size={110}
+              size={120}
               name={name || 'ชื่อของคุณ'}
               isOnline={true}
             />
-            <span className="text-[11px] text-amber-300/80 mt-1.5">
-              {avatarMode === 'photo' && photoUrl ? 'รูปภาพของคุณ' : 'ตัวละครของคุณในงานวัด'}
+            <span className="text-[11px] text-amber-300/80 mt-1.5 font-medium">
+              {avatarMode === 'photo' && photoUrl 
+                ? 'รูปภาพของคุณบนตัวละครชุดไทย 🪷' 
+                : 'ตัวละคร 2D ชุดไทย (หน้าการ์ตูน) 👘'}
             </span>
           </div>
 
@@ -164,10 +166,10 @@ export default function ProfileModal({
             />
           </div>
 
-          {/* Avatar Mode Switcher (Photo vs Chibi) */}
+          {/* Avatar Mode Switcher (2D Cartoon vs Photo on Head) */}
           <div>
             <label className="block text-xs sm:text-sm font-medium text-slate-200 mb-2">
-              รูปแบบรูปประจำตัว
+              เลือกรูปแบบรูปประจำตัว
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -175,12 +177,12 @@ export default function ProfileModal({
                 onClick={() => setAvatarMode('chibi')}
                 className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   avatarMode === 'chibi'
-                    ? 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-md'
+                    ? 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-md ring-1 ring-amber-400/50'
                     : 'border-slate-800 bg-slate-800/40 text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <span>👘</span>
-                <span>ชุดไทยการ์ตูน</span>
+                <span>ตัวละคร 2D (การ์ตูน)</span>
               </button>
 
               <button
@@ -193,19 +195,19 @@ export default function ProfileModal({
                 }}
                 className={`py-2 px-3 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   avatarMode === 'photo'
-                    ? 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-md'
+                    ? 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-md ring-1 ring-amber-400/50'
                     : 'border-slate-800 bg-slate-800/40 text-slate-400 hover:text-slate-200'
                 }`}
               >
                 <Camera size={15} />
-                <span>ใส่รูปภาพตัวเอง</span>
+                <span>ใส่รูปจริงบนหัวละคร</span>
               </button>
             </div>
           </div>
 
           {/* Mode 1: Photo Upload Controls */}
           {avatarMode === 'photo' && (
-            <div className="p-3.5 bg-slate-950/70 rounded-2xl border border-slate-800 space-y-3">
+            <div className="p-3.5 bg-slate-950/70 rounded-2xl border border-amber-500/30 space-y-3 animate-in fade-in duration-200">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -218,10 +220,10 @@ export default function ProfileModal({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full sm:w-auto flex-1 py-2.5 px-4 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/50 text-amber-200 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  className="w-full sm:w-auto flex-1 py-2.5 px-4 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/60 text-amber-200 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
                 >
                   <Upload size={15} />
-                  <span>{photoUrl ? 'เปลี่ยนรูปภาพใหม่' : 'เลือกรูปภาพจากเครื่อง'}</span>
+                  <span>{photoUrl ? 'เปลี่ยนรูปภาพใหม่' : 'เลือกรูปภาพใบหน้าจากเครื่อง'}</span>
                 </button>
 
                 {photoUrl && (
@@ -229,7 +231,7 @@ export default function ProfileModal({
                     type="button"
                     onClick={handleRemovePhoto}
                     className="py-2.5 px-3 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/40 text-rose-300 text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                    title="ลบรูปภาพ"
+                    title="ลบรูปภาพและกลับเป็นหน้าการ์ตูน"
                   >
                     <Trash2 size={15} />
                     <span>ลบรูป</span>
@@ -237,88 +239,89 @@ export default function ProfileModal({
                 )}
               </div>
 
-              <p className="text-[11px] text-slate-400 text-center">
-                รองรับไฟล์ภาพ JPG, PNG, WebP (ระบบจะย่อขนาดให้อัตโนมัติ)
+              <p className="text-[11px] text-amber-300/80 text-center">
+                ✨ รูปภาพของคุณจะถูกใส่ลงตรงหัวของตัวละครชุดไทยโดยอัตโนมัติ
               </p>
             </div>
           )}
 
-          {/* Mode 2: Chibi Avatar Customization */}
-          {avatarMode === 'chibi' && (
-            <div className="space-y-4 pt-1">
-              {/* Gender */}
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  เลือกเพศและสไตล์
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {CHARACTER_GENDERS.map((g) => (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => setCharacter({ ...character, gender: g.id })}
-                      className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-0.5 ${
-                        character.gender === g.id
-                          ? 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-md'
-                          : 'border-slate-800 bg-slate-800/40 text-slate-400'
-                      }`}
-                    >
-                      <span className="text-base">{g.id === 'female' ? '🌸' : g.id === 'male' ? '🌿' : '✨'}</span>
-                      <span className="text-[11px] font-semibold">{g.label.split(' ')[0]}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Outfit Color */}
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  สีชุดไทยประยุกต์
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {OUTFIT_COLORS.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setCharacter({ ...character, outfitColor: c.hex })}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] transition-all cursor-pointer ${
-                        character.outfitColor === c.hex
-                          ? 'border-amber-400 bg-amber-500/20 text-amber-200 font-semibold'
-                          : 'border-slate-800 bg-slate-800/30 text-slate-300'
-                      }`}
-                    >
-                      <span className="w-3 h-3 rounded-full border border-black/30 shrink-0" style={{ backgroundColor: c.hex }} />
-                      <span>{c.name}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Skin Tone */}
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1.5">
-                  สีผิว
-                </label>
-                <div className="flex gap-2">
-                  {SKIN_TONES.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => setCharacter({ ...character, skinTone: s.hex })}
-                      className={`flex-1 py-1.5 px-2 rounded-xl border text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                        character.skinTone === s.hex
-                          ? 'border-amber-400 bg-amber-500/20 text-amber-200'
-                          : 'border-slate-800 bg-slate-800/30 text-slate-400'
-                      }`}
-                    >
-                      <span className="w-3 h-3 rounded-full border border-black/20 shrink-0" style={{ backgroundColor: s.hex }} />
-                      <span className="truncate">{s.name}</span>
-                    </button>
-                  ))}
-                </div>
+          {/* Thai Costume Customization (Available for Both 2D and Photo-on-Head modes!) */}
+          <div className="space-y-4 pt-1 border-t border-slate-800/80">
+            {/* Gender / Attire Style */}
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                เลือกเพศและสไตล์ชุดไทย
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {CHARACTER_GENDERS.map((g) => (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => setCharacter({ ...character, gender: g.id })}
+                    className={`p-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center gap-0.5 ${
+                      character.gender === g.id
+                        ? 'border-amber-400 bg-amber-500/20 text-amber-200 shadow-md ring-1 ring-amber-400/40'
+                        : 'border-slate-800 bg-slate-800/40 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className="text-base">{g.id === 'female' ? '🌸' : g.id === 'male' ? '🌿' : '✨'}</span>
+                    <span className="text-[11px] font-semibold">{g.label.split(' ')[0]}</span>
+                    <span className="text-[9px] text-slate-400">
+                      {g.id === 'female' ? 'ห่มสไบ' : g.id === 'male' ? 'ราชปะแตน' : 'ร่วมสมัย'}
+                    </span>
+                  </button>
+                ))}
               </div>
             </div>
-          )}
+
+            {/* Outfit Color */}
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                สีชุดไทยมงคล
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {OUTFIT_COLORS.map((c) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setCharacter({ ...character, outfitColor: c.hex })}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] transition-all cursor-pointer ${
+                      character.outfitColor === c.hex
+                        ? 'border-amber-400 bg-amber-500/20 text-amber-200 font-semibold ring-1 ring-amber-400/40'
+                        : 'border-slate-800 bg-slate-800/30 text-slate-300 hover:border-slate-700'
+                    }`}
+                  >
+                    <span className="w-3 h-3 rounded-full border border-black/30 shrink-0" style={{ backgroundColor: c.hex }} />
+                    <span>{c.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Skin Tone */}
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                สีผิว / โทนผิว
+              </label>
+              <div className="flex gap-2">
+                {SKIN_TONES.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setCharacter({ ...character, skinTone: s.hex })}
+                    className={`flex-1 py-1.5 px-2 rounded-xl border text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      character.skinTone === s.hex
+                        ? 'border-amber-400 bg-amber-500/20 text-amber-200 font-semibold ring-1 ring-amber-400/40'
+                        : 'border-slate-800 bg-slate-800/30 text-slate-400 hover:border-slate-700'
+                    }`}
+                  >
+                    <span className="w-3 h-3 rounded-full border border-black/20 shrink-0" style={{ backgroundColor: s.hex }} />
+                    <span className="truncate">{s.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Submit Button */}
           <div className="pt-2">

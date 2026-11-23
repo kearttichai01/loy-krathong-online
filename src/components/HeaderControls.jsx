@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Volume2, VolumeX, Database, Info, Sparkles, Waves, Tent, User } from 'lucide-react';
 import { audioService } from '../services/audioService';
+import CharacterPreview from './CharacterPreview';
 
 export default function HeaderControls({
   krathongCount = 0,
@@ -68,13 +69,15 @@ export default function HeaderControls({
           <button
             onClick={onEditProfile}
             title={`แก้ไขตัวละคร (${myProfile.name})`}
-            className="flex items-center gap-1 p-1 sm:px-2.5 sm:py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-amber-500/30 text-xs text-amber-200 backdrop-blur-md transition-all cursor-pointer active:scale-95 shadow-sm"
+            className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-amber-500/30 text-xs text-amber-200 backdrop-blur-md transition-all cursor-pointer active:scale-95 shadow-sm"
           >
-            {myProfile.photoUrl ? (
-              <img src={myProfile.photoUrl} alt="Me" className="w-5 h-5 rounded-full object-cover" />
-            ) : (
-              <span className="text-sm">👤</span>
-            )}
+            <CharacterPreview
+              gender={myProfile.character?.gender}
+              outfitColor={myProfile.character?.outfitColor}
+              skinTone={myProfile.character?.skinTone}
+              photoUrl={myProfile.photoUrl}
+              size={24}
+            />
             <span className="hidden md:inline font-medium truncate max-w-[80px]">
               {myProfile.name}
             </span>
