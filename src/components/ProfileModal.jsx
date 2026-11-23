@@ -106,14 +106,16 @@ export default function ProfileModal({
             <span className="text-2xl">🪷</span>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-amber-200">
-                สร้างตัวละครเข้าร่วมงานลอยกระทง
+                {initialData ? 'แก้ไขตัวละครของคุณ' : 'สร้างตัวละครเข้าร่วมงานลอยกระทง'}
               </h2>
               <p className="text-[11px] text-slate-400">
-                ระบุชื่อและเลือกรูปประจำตัวของคุณก่อนเข้าสู่งานวัด
+                {initialData 
+                  ? 'แก้ไขข้อมูลตัวละคร (ระบบจำไว้ในเครื่องนี้เรียบร้อยแล้ว)' 
+                  : 'ระบุชื่อและเลือกรูปประจำตัว (ระบบจะจำไว้ในเครื่องนี้โดยอัตโนมัติ)'}
               </p>
             </div>
           </div>
-          {canClose && onClose && (
+          {onClose && (
             <button
               onClick={onClose}
               aria-label="Close"
@@ -330,8 +332,11 @@ export default function ProfileModal({
               className="w-full py-3.5 px-6 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold rounded-2xl shadow-xl hover:shadow-amber-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm sm:text-base border border-yellow-200 active:scale-95"
             >
               <Sparkles size={18} />
-              <span>เข้าสู่งานวัดริมน้ำ 🎪</span>
+              <span>{initialData ? 'บันทึกการแก้ไขตัวละคร ✨' : 'บันทึกและจำเครื่องนี้ พร้อมเข้าสู่งานวัด 🎪'}</span>
             </button>
+            <p className="text-[10px] text-slate-400 text-center mt-2">
+              * ข้อมูลตัวละครจะถูกบันทึกจำไว้ในเครื่องนี้โดยอัตโนมัติ เมื่อกลับมาเปิดใหม่จะไม่ต้องสร้างซ้ำอีก
+            </p>
           </div>
         </form>
       </div>

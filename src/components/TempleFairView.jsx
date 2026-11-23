@@ -10,6 +10,7 @@ export default function TempleFairView({
   onFloatCouple,
   onGoToRiver,
   onEditProfile,
+  onCreateProfile,
   onSendInvite,
   onCancelInvite,
   outgoingInviteStatus = null, // { status: 'idle'|'waiting'|'accepted'|'rejected', partner, inviteId }
@@ -32,9 +33,21 @@ export default function TempleFairView({
   };
 
   const handleStartInvite = (partner) => {
+    if (!myProfile) {
+      if (onCreateProfile) onCreateProfile();
+      return;
+    }
     if (onSendInvite) {
       onSendInvite(partner);
     }
+  };
+
+  const handleSelectPartner = (v) => {
+    if (!myProfile) {
+      if (onCreateProfile) onCreateProfile();
+      return;
+    }
+    setSelectedPartner(v);
   };
 
   const handleCloseModal = () => {
@@ -52,40 +65,71 @@ export default function TempleFairView({
 
       {/* 2. Center Interactive Area */}
       <div className="relative z-10 flex-1 overflow-y-auto px-4 pt-[max(4.5rem,calc(env(safe-area-inset-top)+3.5rem))] pb-4 sm:pt-20 sm:pb-6 flex flex-col items-center max-w-5xl mx-auto w-full">
-        {/* Your Character Showcase Card */}
-        <div className="w-full max-w-xl p-3.5 sm:p-4 bg-gradient-to-r from-slate-950/90 via-slate-900/90 to-slate-950/90 rounded-2xl border border-amber-400/40 shadow-2xl backdrop-blur-md mb-6 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <CharacterPreview
-              gender={myProfile.character?.gender}
-              outfitColor={myProfile.character?.outfitColor}
-              skinTone={myProfile.character?.skinTone}
-              photoUrl={myProfile.photoUrl}
-              size={64}
-              isOnline={true}
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm sm:text-base font-bold text-amber-200">
-                  {myProfile.name}
-                </span>
-                <span className="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                  ตัวคุณ
-                </span>
+        {/* Device Profile Card: Shows Character if already created on this device, or Welcome Create Card if not yet */}
+        {myProfile ? (
+          <div className="w-full max-w-xl p-3.5 sm:p-4 bg-gradient-to-r from-slate-950/90 via-slate-900/90 to-slate-950/90 rounded-2xl border border-amber-400/40 shadow-2xl backdrop-blur-md mb-6 flex items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <CharacterPreview
+                gender={myProfile.character?.gender}
+                outfitColor={myProfile.character?.outfitColor}
+                skinTone={myProfile.character?.skinTone}
+                photoUrl={myProfile.photoUrl}
+                size={64}
+                isOnline={true}
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm sm:text-base font-bold text-amber-200">
+                    {myProfile.name}
+                  </span>
+                  <span className="text-[10px] px-2 py-0.2 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    ตัวคุณ (จำเครื่องนี้แล้ว)
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  กำลังรออยู่ที่ท่าน้ำงานวัด 🏮
+                </p>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                กำลังรออยู่ที่ท่าน้ำงานวัด 🏮
-              </p>
             </div>
-          </div>
 
-          <button
-            onClick={onEditProfile}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-amber-200 border border-slate-700 text-xs transition-all cursor-pointer active:scale-95 shrink-0"
-          >
-            <Edit3 size={13} />
-            <span className="hidden sm:inline">แก้ไขตัวละคร</span>
-          </button>
-        </div>
+            <button
+              onClick={onEditProfile}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-amber-200 border border-slate-700 text-xs transition-all cursor-pointer active:scale-95 shrink-0"
+            >
+              <Edit3 size={13} />
+              <span className="hidden sm:inline">แก้ไขตัวละคร</span>
+            </button>
+          </div>
+        ) : (
+          <div className="w-full max-w-xl p-4 sm:p-5 bg-gradient-to-r from-slate-950/95 via-slate-900/95 to-slate-950/95 rounded-2xl sm:rounded-3xl border border-amber-400/50 shadow-2xl backdrop-blur-md mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3.5 text-center sm:text-left">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-2xl sm:text-3xl shrink-0 shadow-inner">
+                🪷
+              </div>
+              <div>
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <span className="text-sm sm:text-base font-bold text-amber-200">
+                    ยังไม่ได้สร้างตัวละคร
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-amber-500/30">
+                    สำหรับเครื่องนี้
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+                  กดปุ่มเพื่อสร้างตัวละครชุดไทย (ใส่รูปตัวเองได้) เพื่อปรากฏตัวที่ท่าน้ำ
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={onCreateProfile}
+              className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-lg hover:shadow-amber-500/30 transition-all cursor-pointer active:scale-95 shrink-0 border border-yellow-200 flex items-center justify-center gap-1.5"
+            >
+              <span>✨</span>
+              <span>สร้างตัวละครเลย</span>
+            </button>
+          </div>
+        )}
 
         {/* Section Title & Share Button */}
         <div className="w-full max-w-5xl flex items-center justify-between mb-3 px-1">
@@ -135,7 +179,7 @@ export default function TempleFairView({
             {onlineVisitors.map((v) => (
               <div
                 key={v.id}
-                onClick={() => setSelectedPartner(v)}
+                onClick={() => handleSelectPartner(v)}
                 className="group p-3 sm:p-3.5 bg-slate-900/80 hover:bg-slate-800/90 rounded-2xl border border-slate-700/60 hover:border-amber-400/60 shadow-lg backdrop-blur-sm transition-all duration-200 cursor-pointer flex flex-col items-center text-center transform hover:-translate-y-1 active:scale-95"
               >
                 <div className="relative mb-2">

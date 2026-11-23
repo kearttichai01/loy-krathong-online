@@ -13,7 +13,8 @@ import { useKrathongStore } from './services/krathongStore';
 import { presenceService } from './services/presenceService';
 import { INITIAL_ONLINE_VISITORS } from './data/onlineVisitors';
 
-const PROFILE_STORAGE_KEY = 'loy_krathong_my_profile';
+const PROFILE_STORAGE_KEY = 'loy_krathong_device_profile_v1';
+const LEGACY_STORAGE_KEY = 'loy_krathong_my_profile';
 
 export default function App() {
   const {
@@ -25,25 +26,29 @@ export default function App() {
     setIsLiveFirebase
   } = useKrathongStore();
 
-  // 1. User Profile State (Mandatory First Step)
+  // 1. User Profile State (Persistent Device Memory)
   const [myProfile, setMyProfile] = useState(() => {
     try {
-      const stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+      let stored = localStorage.getItem(PROFILE_STORAGE_KEY);
+      if (!stored) {
+        stored = localStorage.getItem(LEGACY_STORAGE_KEY);
+      }
       if (stored) {
         const parsed = JSON.parse(stored);
         if (!parsed.id) {
           parsed.id = 'u_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(parsed));
         }
+        localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(parsed));
         return parsed;
       }
     } catch (e) {
-      console.error(e);
+      console.error('Error loading device profile:', e);
     }
     return null;
   });
 
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(!myProfile);
+  // Non-blocking modal: user can open via "สร้างตัวละคร" button anytime
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('temple-fair'); // 'temple-fair' | 'river'
 
   // Wizard & Interaction States
@@ -187,12 +192,13 @@ export default function App() {
         currentView={currentView}
         onToggleView={() => setCurrentView((prev) => (prev === 'temple-fair' ? 'river' : 'temple-fair'))}
         onEditProfile={() => setIsProfileModalOpen(true)}
+        onCreateProfile={() => setIsProfileModalOpen(true)}
         onClearKrathongs={clearAllKrathongs}
         myProfile={myProfile}
       />
 
       {/* VIEW 1: TEMPLE FAIR PIER (ลานงานวัดริมน้ำ & รอดูคนออนไลน์) */}
-      {currentView === 'temple-fair' && myProfile && (
+      {currentView === 'temple-fair' && (
         <TempleFairView
           myProfile={myProfile}
           onlineVisitors={onlineVisitors}
@@ -200,6 +206,7 @@ export default function App() {
           onFloatCouple={handleFloatCouple}
           onGoToRiver={() => setCurrentView('river')}
           onEditProfile={() => setIsProfileModalOpen(true)}
+          onCreateProfile={() => setIsProfileModalOpen(true)}
           onSendInvite={handleSendInvite}
           onCancelInvite={handleCancelInvite}
           outgoingInviteStatus={outgoingInviteStatus}
@@ -217,12 +224,12 @@ export default function App() {
         />
       )}
 
-      {/* MANDATORY PROFILE CREATION MODAL */}
+      {/* PROFILE CREATION & EDIT MODAL (จำเครื่องนี้ไว้เสมอ) */}
       <ProfileModal
         isOpen={isProfileModalOpen}
         onSave={handleSaveProfile}
         initialData={myProfile}
-        canClose={Boolean(myProfile)}
+        canClose={true}
         onClose={() => setIsProfileModalOpen(false)}
       />
 

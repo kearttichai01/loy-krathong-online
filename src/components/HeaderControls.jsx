@@ -11,6 +11,7 @@ export default function HeaderControls({
   currentView = 'temple-fair',
   onToggleView,
   onEditProfile,
+  onCreateProfile,
   onClearKrathongs,
   myProfile
 }) {
@@ -65,7 +66,7 @@ export default function HeaderControls({
           </button>
         )}
 
-        {/* User Profile Avatar / Edit Button */}
+        {/* If character already created on this device: show Avatar & Edit Button */}
         {myProfile && onEditProfile && (
           <button
             onClick={onEditProfile}
@@ -82,6 +83,18 @@ export default function HeaderControls({
             <span className="hidden md:inline font-medium truncate max-w-[80px]">
               {myProfile.name}
             </span>
+          </button>
+        )}
+
+        {/* If not created yet on this device: show prominent Create button */}
+        {!myProfile && onCreateProfile && (
+          <button
+            onClick={onCreateProfile}
+            title="กดเพื่อสร้างตัวละครสำหรับเครื่องนี้"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold text-xs shadow-md hover:shadow-amber-500/30 transition-all cursor-pointer active:scale-95 border border-yellow-200 animate-pulse"
+          >
+            <span>🪷</span>
+            <span>สร้างตัวละคร</span>
           </button>
         )}
 
