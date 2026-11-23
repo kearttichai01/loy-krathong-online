@@ -64,14 +64,34 @@ export default function KrathongDetailModal({ krathong, onClose, onReact }) {
           <X size={18} />
         </button>
 
-        {/* Top Header: Character & Krathong in harmony */}
-        <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-3 pt-1">
-          {krathong.character ? (
+        {/* Top Header: Character(s) & Krathong in harmony */}
+        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 pt-1">
+          {krathong.isCouple && krathong.partner ? (
+            /* Couple Avatars */
+            <div className="flex items-center gap-1.5 p-2 bg-slate-950/60 rounded-2xl border border-rose-500/30">
+              <CharacterPreview
+                gender={krathong.character?.gender}
+                outfitColor={krathong.character?.outfitColor}
+                skinTone={krathong.character?.skinTone}
+                photoUrl={krathong.photoUrl}
+                size={54}
+              />
+              <span className="text-base text-rose-400 animate-pulse">💖</span>
+              <CharacterPreview
+                gender={krathong.partner.character?.gender}
+                outfitColor={krathong.partner.character?.outfitColor}
+                skinTone={krathong.partner.character?.skinTone}
+                photoUrl={krathong.partner.photoUrl}
+                size={54}
+              />
+            </div>
+          ) : krathong.character || krathong.photoUrl ? (
             <CharacterPreview
-              gender={krathong.character.gender}
-              outfitColor={krathong.character.outfitColor}
-              skinTone={krathong.character.skinTone}
-              size={76}
+              gender={krathong.character?.gender}
+              outfitColor={krathong.character?.outfitColor}
+              skinTone={krathong.character?.skinTone}
+              photoUrl={krathong.photoUrl}
+              size={70}
             />
           ) : (
             <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-xl">
@@ -85,7 +105,7 @@ export default function KrathongDetailModal({ krathong, onClose, onReact }) {
             <KrathongSVG
               style={krathong.style || 'banana-leaf'}
               flameColor={krathong.flameColor || 'gold'}
-              size={84}
+              size={80}
               animated={true}
             />
           </div>
@@ -93,7 +113,7 @@ export default function KrathongDetailModal({ krathong, onClose, onReact }) {
 
         {/* Author Name & Time */}
         <h3 className="text-base sm:text-lg font-bold text-amber-200">
-          กระทงของ {krathong.name || 'เพื่อนร่วมสายน้ำ'}
+          {krathong.isCouple ? `กระทงคู่ของ ${krathong.name} 💑` : `กระทงของ ${krathong.name || 'เพื่อนร่วมสายน้ำ'}`}
         </h3>
         <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">
           ลอยสู่แม่น้ำ {getTimeString()}
@@ -102,7 +122,7 @@ export default function KrathongDetailModal({ krathong, onClose, onReact }) {
         {/* Wish Quote Box */}
         <div className="my-3 sm:my-4 p-3 sm:p-4 bg-gradient-to-b from-slate-950/80 to-slate-900/90 rounded-xl sm:rounded-2xl border border-amber-400/20 shadow-inner relative text-left">
           <span className="absolute -top-2.5 left-3 sm:left-4 px-2 py-0.2 bg-amber-500 text-slate-950 text-[9px] sm:text-[10px] font-bold rounded-full">
-            คำอธิษฐาน 🪷
+            {krathong.isCouple ? 'คำอธิษฐานคู่ 💑' : 'คำอธิษฐาน 🪷'}
           </span>
           <p className="text-slate-200 text-xs sm:text-sm md:text-base leading-relaxed italic font-mali mt-1">
             "{krathong.wish}"

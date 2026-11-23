@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
-import StepCharacter from './StepCharacter';
 import StepKrathong from './StepKrathong';
 import StepWish from './StepWish';
 
-export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
+export default function LaunchWizard({ 
+  isOpen, 
+  onClose, 
+  onLaunch, 
+  myProfile, 
+  partner = null 
+}) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
-    character: {
-      gender: 'female',
-      outfitColor: '#ec4899',
-      skinTone: '#fde68a'
-    },
+    isCouple: false,
+    character: null,
+    photoUrl: null,
+    partner: null,
     style: 'banana-leaf',
     flameColor: 'gold',
     wish: '',
@@ -21,22 +25,45 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
   });
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Sync profile & partner when opening
+  useEffect(() => {
+    if (isOpen && myProfile) {
+      const isCouple = Boolean(partner);
+      const compositeName = isCouple 
+        ? `${myProfile.name} & ${partner.name}` 
+        : myProfile.name;
+
+      setFormData({
+        name: compositeName,
+        characterName: myProfile.name,
+        isCouple,
+        character: myProfile.character,
+        photoUrl: myProfile.photoUrl,
+        partner: partner ? {
+          name: partner.name,
+          character: partner.character,
+          photoUrl: partner.photoUrl
+        } : null,
+        style: 'banana-leaf',
+        flameColor: isCouple ? 'rose' : 'gold',
+        wish: '',
+        releaseLantern: true
+      });
+      setStep(1);
+      setErrorMsg('');
+    }
+  }, [isOpen, myProfile, partner]);
+
   if (!isOpen) return null;
 
   const handleNext = () => {
     setErrorMsg('');
-    if (step === 1) {
-      if (!formData.name.trim()) {
-        setErrorMsg('กรุณากรอกชื่อของคุณก่อนดำเนินการต่อครับ');
-        return;
-      }
-    }
-    setStep((prev) => Math.min(prev + 1, 3));
+    setStep(2);
   };
 
   const handleBack = () => {
     setErrorMsg('');
-    setStep((prev) => Math.max(prev - 1, 1));
+    setStep(1);
   };
 
   const handleSubmit = (e) => {
@@ -46,13 +73,15 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
       return;
     }
 
-    // Fire festive celebration confetti
+    // Festive celebration confetti
     try {
       confetti({
-        particleCount: 80,
-        spread: 80,
-        origin: { y: 0.85 },
-        colors: ['#facc15', '#fb7185', '#38bdf8', '#4ade80', '#c084fc']
+        particleCount: 90,
+        spread: 85,
+        origin: { y: 0.8 },
+        colors: formData.isCouple 
+          ? ['#f43f5e', '#fb7185', '#fda4af', '#facc15', '#fef08a']
+          : ['#facc15', '#fb7185', '#38bdf8', '#4ade80', '#c084fc']
       });
     } catch (e) {}
 
@@ -69,13 +98,13 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-800 bg-slate-950/50">
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <span className="text-lg sm:text-xl">🪷</span>
+            <span className="text-lg sm:text-xl">{formData.isCouple ? '💑' : '🪷'}</span>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-amber-200">
-                สร้างและลอยกระทงออนไลน์
+                {formData.isCouple ? 'แต่งกระทงคู่ & อธิษฐาน' : 'แต่งกระทง & อธิษฐานขอพร'}
               </h2>
               <p className="text-[10px] sm:text-[11px] text-slate-400">
-                ขั้นตอนที่ {step} จาก 3: {step === 1 ? 'เลือกตัวละคร' : step === 2 ? 'เลือกกระทง' : 'อธิษฐานขอพร'}
+                ขั้นตอนที่ {step} จาก 2: {step === 1 ? 'เลือกรูปแบบกระทง & เปลวไฟ' : 'พิมพ์คำอธิษฐาน & ปล่อยลงน้ำ'}
               </p>
             </div>
           </div>
@@ -91,7 +120,7 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
         <div className="flex h-1 bg-slate-800">
           <div 
             className="bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-300"
-            style={{ width: `${(step / 3) * 100}%` }}
+            style={{ width: `${(step / 2) * 100}%` }}
           />
         </div>
 
@@ -105,12 +134,9 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
           )}
 
           {step === 1 && (
-            <StepCharacter data={formData} onChange={setFormData} />
-          )}
-          {step === 2 && (
             <StepKrathong data={formData} onChange={setFormData} />
           )}
-          {step === 3 && (
+          {step === 2 && (
             <StepWish data={formData} onChange={setFormData} />
           )}
         </div>
@@ -129,13 +155,13 @@ export default function LaunchWizard({ isOpen, onClose, onLaunch }) {
             <div />
           )}
 
-          {step < 3 ? (
+          {step === 1 ? (
             <button
               type="button"
               onClick={handleNext}
               className="flex items-center gap-1 px-4 py-2 sm:px-5 sm:py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-300 hover:to-yellow-300 rounded-xl shadow-lg transition-all cursor-pointer active:scale-95"
             >
-              ถัดไป <ChevronRight size={16} />
+              ไปอธิษฐานขอพร <ChevronRight size={16} />
             </button>
           ) : (
             <button

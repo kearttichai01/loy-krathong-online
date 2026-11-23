@@ -3,10 +3,30 @@ import { DEFAULT_WISHES } from '../../data/defaultWishes';
 import CharacterPreview from '../CharacterPreview';
 import KrathongSVG from '../KrathongSVG';
 
+const COUPLE_WISHES = [
+  {
+    category: 'ความรักมั่นคง',
+    icon: '💖',
+    text: 'ขอขมาพระแม่คงคา และขอให้ความรักของเราสองคนมั่นคง อบอุ่น และเคียงข้างกันตลอดไป'
+  },
+  {
+    category: 'สุขกายสบายใจ',
+    icon: '✨',
+    text: 'ขอลอยเคราะห์และเรื่องร้ายๆ ออกไป ขอให้เราทั้งคู่มีสุขภาพแข็งแรง ร่ำรวย และมีความสุขทุกวัน'
+  },
+  {
+    category: 'สมหวังทุกสิ่ง',
+    icon: '🌟',
+    text: 'ขอให้ความฝันและเป้าหมายที่เราตั้งใจไว้สำเร็จลุล่วง สมหวังในทุกประการ สาธุ 🙏'
+  }
+];
+
 export default function StepWish({ data, onChange }) {
   const handleSelectPreset = (wishText) => {
     onChange({ ...data, wish: wishText });
   };
+
+  const wishList = data.isCouple ? [...COUPLE_WISHES, ...DEFAULT_WISHES] : DEFAULT_WISHES;
 
   return (
     <div className="space-y-3.5 sm:space-y-4">
@@ -14,7 +34,7 @@ export default function StepWish({ data, onChange }) {
       <div>
         <div className="flex items-center justify-between mb-1">
           <label className="text-xs sm:text-sm font-medium text-slate-200">
-            พิมพ์คำอธิษฐาน / คำขอพร <span className="text-rose-400">*</span>
+            {data.isCouple ? 'พิมพ์คำอธิษฐานคู่ 💑' : 'พิมพ์คำอธิษฐาน / คำขอพร 🪷'} <span className="text-rose-400">*</span>
           </label>
           <span className="text-[10px] sm:text-[11px] text-slate-400">
             {data.wish?.length || 0}/200 ตัวอักษร
@@ -25,7 +45,11 @@ export default function StepWish({ data, onChange }) {
           maxLength={200}
           value={data.wish}
           onChange={(e) => onChange({ ...data, wish: e.target.value })}
-          placeholder="พิมพ์คำอธิษฐาน ขอขมาพระแม่คงคา หรือขอพรสิ่งดีๆ ในค่ำคืนนี้..."
+          placeholder={
+            data.isCouple 
+              ? `พิมพ์คำขอพรร่วมกันของ ${data.name}...` 
+              : "พิมพ์คำอธิษฐาน ขอขมาพระแม่คงคา หรือขอพรสิ่งดีๆ ในค่ำคืนนี้..."
+          }
           className="w-full px-3.5 py-2 sm:py-2.5 bg-slate-900/90 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition-all text-xs sm:text-sm leading-relaxed"
         />
       </div>
@@ -33,10 +57,10 @@ export default function StepWish({ data, onChange }) {
       {/* 2. Preset Quick Wish Tags */}
       <div>
         <label className="block text-[11px] sm:text-xs font-medium text-slate-300 mb-1.5">
-          หรือเลือกคำขอพรมงคลด่วน:
+          {data.isCouple ? 'หรือเลือกคำขอพรคู่รักมงคล:' : 'หรือเลือกคำขอพรมงคลด่วน:'}
         </label>
         <div className="flex flex-wrap gap-1 sm:gap-1.5">
-          {DEFAULT_WISHES.map((w, idx) => (
+          {wishList.map((w, idx) => (
             <button
               key={idx}
               type="button"
@@ -74,13 +98,34 @@ export default function StepWish({ data, onChange }) {
       {/* 4. Final Review Card */}
       <div className="p-3 sm:p-3.5 bg-gradient-to-r from-slate-900/90 to-slate-800/90 rounded-xl sm:rounded-2xl border border-amber-500/30 flex items-center gap-3">
         <div className="shrink-0 flex items-center">
-          <CharacterPreview
-            gender={data.character.gender}
-            outfitColor={data.character.outfitColor}
-            skinTone={data.character.skinTone}
-            size={56}
-          />
-          <div className="-ml-2">
+          {data.isCouple && data.partner ? (
+            <div className="flex items-center -space-x-3">
+              <CharacterPreview
+                gender={data.character?.gender}
+                outfitColor={data.character?.outfitColor}
+                skinTone={data.character?.skinTone}
+                photoUrl={data.photoUrl}
+                size={48}
+              />
+              <CharacterPreview
+                gender={data.partner.character?.gender}
+                outfitColor={data.partner.character?.outfitColor}
+                skinTone={data.partner.character?.skinTone}
+                photoUrl={data.partner.photoUrl}
+                size={48}
+              />
+            </div>
+          ) : (
+            <CharacterPreview
+              gender={data.character?.gender}
+              outfitColor={data.character?.outfitColor}
+              skinTone={data.character?.skinTone}
+              photoUrl={data.photoUrl}
+              size={56}
+            />
+          )}
+
+          <div className="-ml-1">
             <KrathongSVG
               style={data.style}
               flameColor={data.flameColor}
@@ -95,8 +140,8 @@ export default function StepWish({ data, onChange }) {
             <span className="text-xs sm:text-sm font-bold text-amber-300 truncate">
               {data.name || 'ผู้ร่วมลอยกระทง'}
             </span>
-            <span className="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded-full border border-slate-700">
-              พร้อมลอยสู่แม่น้ำ
+            <span className="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.2 rounded-full border border-slate-700 shrink-0">
+              {data.isCouple ? 'กระทงคู่ 💑' : 'พร้อมลอย 🪷'}
             </span>
           </div>
           <p className="text-[11px] text-slate-300 italic line-clamp-2 mt-0.5">

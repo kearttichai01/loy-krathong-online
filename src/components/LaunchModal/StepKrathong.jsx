@@ -1,20 +1,77 @@
 import React from 'react';
 import KrathongSVG from '../KrathongSVG';
+import CharacterPreview from '../CharacterPreview';
 import { KRATHONG_STYLES, FLAME_COLORS } from '../../data/krathongPresets';
 
 export default function StepKrathong({ data, onChange }) {
   return (
     <div className="space-y-4 sm:space-y-5">
-      {/* Live Krathong Preview */}
-      <div className="flex flex-col items-center justify-center p-2.5 sm:p-4 bg-slate-800/40 rounded-xl sm:rounded-2xl border border-slate-700/50">
-        <KrathongSVG
-          style={data.style}
-          flameColor={data.flameColor}
-          size={110}
-          animated={true}
-        />
-        <p className="text-[11px] sm:text-xs text-amber-300 font-medium mt-1">
-          {KRATHONG_STYLES.find((s) => s.id === data.style)?.name}
+      {/* Live Krathong & Character Preview */}
+      <div className="flex flex-col items-center justify-center p-3 sm:p-4 bg-slate-800/40 rounded-xl sm:rounded-2xl border border-slate-700/50">
+        <div className="flex items-center justify-center gap-2 sm:gap-3">
+          {data.isCouple && data.partner ? (
+            <>
+              <div className="flex flex-col items-center">
+                <CharacterPreview
+                  gender={data.character?.gender}
+                  outfitColor={data.character?.outfitColor}
+                  skinTone={data.character?.skinTone}
+                  photoUrl={data.photoUrl}
+                  size={58}
+                />
+                <span className="text-[10px] text-amber-200 font-semibold mt-1 truncate max-w-[70px]">
+                  {data.characterName || data.name?.split('&')[0]?.trim()}
+                </span>
+              </div>
+
+              <div className="relative">
+                <KrathongSVG
+                  style={data.style}
+                  flameColor={data.flameColor}
+                  size={100}
+                  animated={true}
+                />
+                <span className="absolute -top-1 left-1/2 -translate-x-1/2 text-sm animate-bounce">
+                  💖
+                </span>
+              </div>
+
+              <div className="flex flex-col items-center">
+                <CharacterPreview
+                  gender={data.partner.character?.gender}
+                  outfitColor={data.partner.character?.outfitColor}
+                  skinTone={data.partner.character?.skinTone}
+                  photoUrl={data.partner.photoUrl}
+                  size={58}
+                />
+                <span className="text-[10px] text-amber-200 font-semibold mt-1 truncate max-w-[70px]">
+                  {data.partner.name}
+                </span>
+              </div>
+            </>
+          ) : (
+            <>
+              <CharacterPreview
+                gender={data.character?.gender}
+                outfitColor={data.character?.outfitColor}
+                skinTone={data.character?.skinTone}
+                photoUrl={data.photoUrl}
+                size={64}
+              />
+              <div className="-ml-3">
+                <KrathongSVG
+                  style={data.style}
+                  flameColor={data.flameColor}
+                  size={110}
+                  animated={true}
+                />
+              </div>
+            </>
+          )}
+        </div>
+
+        <p className="text-[11px] sm:text-xs text-amber-300 font-medium mt-1.5">
+          {data.isCouple ? `กระทงคู่ของ ${data.name}` : KRATHONG_STYLES.find((s) => s.id === data.style)?.name}
         </p>
       </div>
 

@@ -4,7 +4,8 @@ import { getKrathongImage } from '../utils/canvasHelpers';
 export default function RiverCanvas({
   krathongs = [],
   onSelectKrathong,
-  onOpenWizard
+  onOpenWizard,
+  onGoToFair
 }) {
   const canvasRef = useRef(null);
   const [hoveredKrathong, setHoveredKrathong] = useState(null);
@@ -331,22 +332,27 @@ export default function RiverCanvas({
         // Name Tag Floating above Krathong
         ctx.save();
         ctx.font = '500 11px "Prompt", sans-serif';
-        const nameText = k.name || 'ผู้ร่วมลอยกระทง';
+        const isCouple = Boolean(k.isCouple);
+        const nameText = isCouple ? `💑 ${k.name}` : (k.name || 'ผู้ร่วมลอยกระทง');
         const textWidth = ctx.measureText(nameText).width;
         const tagX = kx - textWidth / 2 - 7;
         const tagY = ky - kSize * 0.55;
 
         // Tag background
-        ctx.fillStyle = isHovered ? 'rgba(245, 158, 11, 0.92)' : 'rgba(15, 23, 42, 0.75)';
-        ctx.strokeStyle = isHovered ? '#fef08a' : 'rgba(253, 224, 71, 0.35)';
-        ctx.lineWidth = 1;
+        ctx.fillStyle = isHovered 
+          ? 'rgba(245, 158, 11, 0.95)' 
+          : isCouple ? 'rgba(88, 28, 135, 0.85)' : 'rgba(15, 23, 42, 0.75)';
+        ctx.strokeStyle = isHovered 
+          ? '#fef08a' 
+          : isCouple ? '#f472b6' : 'rgba(253, 224, 71, 0.35)';
+        ctx.lineWidth = isCouple ? 1.5 : 1;
         ctx.beginPath();
         ctx.roundRect(tagX, tagY, textWidth + 14, 20, 10);
         ctx.fill();
         ctx.stroke();
 
         // Tag text
-        ctx.fillStyle = isHovered ? '#0f172a' : '#fef9c3';
+        ctx.fillStyle = isHovered ? '#0f172a' : isCouple ? '#fdf2f8' : '#fef9c3';
         ctx.fillText(nameText, kx - textWidth / 2, tagY + 14);
         ctx.restore();
       });
@@ -448,9 +454,15 @@ export default function RiverCanvas({
         >
           <div className="bg-slate-900/95 backdrop-blur-md text-slate-100 p-3 rounded-2xl border border-amber-400/40 shadow-2xl max-w-[260px] sm:max-w-xs text-left animate-in fade-in zoom-in-95 duration-150">
             <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-xs sm:text-sm font-bold text-amber-300 truncate">{hoveredKrathong.name}</span>
-              <span className="text-[9px] bg-amber-500/20 text-amber-200 px-1.5 py-0.2 rounded-full border border-amber-500/30">
-                แตะเพื่ออ่าน 🪷
+              <span className="text-xs sm:text-sm font-bold text-amber-300 truncate">
+                {hoveredKrathong.isCouple ? `💑 ${hoveredKrathong.name}` : hoveredKrathong.name}
+              </span>
+              <span className={`text-[9px] px-1.5 py-0.2 rounded-full border ${
+                hoveredKrathong.isCouple 
+                  ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                  : 'bg-amber-500/20 text-amber-200 border-amber-500/30'
+              }`}>
+                {hoveredKrathong.isCouple ? 'กระทงคู่รัก 💖' : 'แตะเพื่ออ่าน 🪷'}
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-2 leading-relaxed">
@@ -464,35 +476,53 @@ export default function RiverCanvas({
         </div>
       )}
 
-      {/* Bottom Pier & Action Button (Responsive for Phone Portrait, Phone Landscape, iPad Portrait, iPad Landscape) */}
+      {/* Bottom Pier & Action Button */}
       <div className="absolute bottom-0 left-0 right-0 pointer-events-none flex flex-col sm:flex-row justify-between items-center sm:items-end gap-2.5 sm:gap-4 p-3 sm:p-6 md:p-8 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         {/* Pier notice card */}
         <div className="pointer-events-auto w-full sm:w-auto">
-          <div className="bg-gradient-to-t from-slate-950 via-slate-900/85 to-slate-900/60 p-2.5 sm:p-3.5 md:p-4 rounded-2xl sm:rounded-3xl border border-amber-500/20 backdrop-blur-md shadow-xl text-center sm:text-left">
-            <p className="text-[11px] sm:text-xs text-amber-300 font-medium flex items-center justify-center sm:justify-start gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-              ประเพณีลอยกระทง คืนเพ็ญเดือน ๑๒
-            </p>
-            <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
-              {krathongs.length === 0 
-                ? 'ยังไม่มีกระทงในสายน้ำ แตะปุ่มด้านล่างเพื่อลอยเป็นคนแรกได้เลย! 🪷' 
-                : 'แตะที่กระทงใดก็ได้ในแม่น้ำเพื่ออ่านคำขอพรและส่งกำลังใจ ❤️'}
-            </p>
+          <div className="bg-gradient-to-t from-slate-950 via-slate-900/85 to-slate-900/60 p-2.5 sm:p-3.5 md:p-4 rounded-2xl sm:rounded-3xl border border-amber-500/20 backdrop-blur-md shadow-xl text-center sm:text-left flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[11px] sm:text-xs text-amber-300 font-medium flex items-center justify-center sm:justify-start gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                ประเพณีลอยกระทง คืนเพ็ญเดือน ๑๒
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">
+                {krathongs.length === 0 
+                  ? 'ยังไม่มีกระทงในสายน้ำ แตะปุ่มด้านล่างเพื่อลอยเป็นคนแรกได้เลย! 🪷' 
+                  : 'แตะที่กระทงใดก็ได้ในแม่น้ำเพื่ออ่านคำขอพรและส่งกำลังใจ ❤️'}
+              </p>
+            </div>
+            {onGoToFair && (
+              <button
+                onClick={onGoToFair}
+                className="px-3 py-1.5 bg-amber-500/15 hover:bg-amber-500/25 border border-amber-400/40 text-amber-200 text-xs font-semibold rounded-xl transition-all cursor-pointer shrink-0 active:scale-95"
+              >
+                ไปงานวัด 🎪
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Floating Launch Button (Thumb-friendly & Responsive) */}
-        <div className="pointer-events-auto w-full sm:w-auto flex justify-center sm:justify-end">
+        {/* Floating Launch Button */}
+        <div className="pointer-events-auto w-full sm:w-auto flex items-center gap-2 justify-center sm:justify-end">
+          {onGoToFair && (
+            <button
+              onClick={onGoToFair}
+              className="px-4 py-3 sm:px-5 sm:py-3.5 bg-slate-900/90 hover:bg-slate-800 border border-amber-500/40 text-amber-300 font-semibold rounded-2xl sm:rounded-full text-xs sm:text-sm shadow-xl transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+            >
+              <span>🎪 ลานงานวัด</span>
+            </button>
+          )}
+
           <button
             onClick={onOpenWizard}
-            className="group relative w-full sm:w-auto flex items-center justify-center gap-2.5 sm:gap-3 px-5 py-3 sm:px-6 sm:py-3.5 md:px-7 md:py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold rounded-2xl sm:rounded-full shadow-2xl hover:shadow-amber-500/40 transform active:scale-95 transition-all cursor-pointer border border-yellow-200 text-sm sm:text-base md:text-lg"
+            className="group relative flex-1 sm:flex-initial flex items-center justify-center gap-2 sm:gap-2.5 px-5 py-3 sm:px-6 sm:py-3.5 md:px-7 md:py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold rounded-2xl sm:rounded-full shadow-2xl hover:shadow-amber-500/40 transform active:scale-95 transition-all cursor-pointer border border-yellow-200 text-xs sm:text-base md:text-lg"
           >
-            <span className="text-xl sm:text-2xl group-hover:scale-125 transition-transform duration-300">🪷</span>
+            <span className="text-lg sm:text-2xl group-hover:scale-125 transition-transform duration-300">🪷</span>
             <div className="text-left">
               <div className="leading-tight font-extrabold">สร้างและลอยกระทง</div>
-              <div className="text-[9px] sm:text-[10px] text-amber-950/80 font-normal">เลือกตัวละคร • ปรับแต่ง • อธิษฐาน</div>
+              <div className="text-[9px] sm:text-[10px] text-amber-950/80 font-normal">เลือกกระทง • อธิษฐาน</div>
             </div>
-            <span className="w-2 h-2 rounded-full bg-white animate-pulse hidden sm:inline-block"></span>
           </button>
         </div>
       </div>

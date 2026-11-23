@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Database, Info, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX, Database, Info, Sparkles, Waves, Tent, User } from 'lucide-react';
 import { audioService } from '../services/audioService';
 
 export default function HeaderControls({
   krathongCount = 0,
   isLiveFirebase = false,
   onOpenFirebaseConfig,
-  onOpenAbout
+  onOpenAbout,
+  currentView = 'temple-fair',
+  onToggleView,
+  onEditProfile,
+  myProfile
 }) {
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
@@ -16,7 +20,7 @@ export default function HeaderControls({
   };
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-3 sm:px-6 md:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 pointer-events-none">
+    <header className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-3 sm:px-6 md:px-8 pt-[max(0.75rem,env(safe-area-inset-top))] pb-2 pointer-events-none">
       {/* Left: Branding & Festival Title */}
       <div className="flex items-center gap-2 sm:gap-3 pointer-events-auto min-w-0">
         <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 p-0.5 shadow-lg shadow-amber-500/20 shrink-0">
@@ -32,15 +36,53 @@ export default function HeaderControls({
             </span>
           </h1>
           <p className="text-[9px] sm:text-xs text-slate-400 truncate hidden xs:block">
-            ขอขมาพระแม่คงคา • ส่งคำอธิษฐานสู่สายธาร
+            {currentView === 'temple-fair' ? '🎪 ลานงานวัดริมน้ำ' : '🌊 แม่น้ำลอยกระทง'}
           </p>
         </div>
       </div>
 
-      {/* Right: Controls & Counters */}
+      {/* Right: Controls & Navigation */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 md:gap-3 pointer-events-auto shrink-0">
+        {/* Switch View Button (งานวัด <-> แม่น้ำ) */}
+        {onToggleView && myProfile && (
+          <button
+            onClick={onToggleView}
+            className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3.5 sm:py-1.5 rounded-xl sm:rounded-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-200 text-xs font-semibold backdrop-blur-md transition-all active:scale-95 cursor-pointer shadow-sm"
+          >
+            {currentView === 'temple-fair' ? (
+              <>
+                <Waves size={14} className="text-amber-300" />
+                <span className="hidden sm:inline">ไปดูแม่น้ำ</span>
+              </>
+            ) : (
+              <>
+                <Tent size={14} className="text-amber-300" />
+                <span className="hidden sm:inline">กลับงานวัด</span>
+              </>
+            )}
+          </button>
+        )}
+
+        {/* User Profile Avatar / Edit Button */}
+        {myProfile && onEditProfile && (
+          <button
+            onClick={onEditProfile}
+            title={`แก้ไขตัวละคร (${myProfile.name})`}
+            className="flex items-center gap-1 p-1 sm:px-2.5 sm:py-1 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-amber-500/30 text-xs text-amber-200 backdrop-blur-md transition-all cursor-pointer active:scale-95 shadow-sm"
+          >
+            {myProfile.photoUrl ? (
+              <img src={myProfile.photoUrl} alt="Me" className="w-5 h-5 rounded-full object-cover" />
+            ) : (
+              <span className="text-sm">👤</span>
+            )}
+            <span className="hidden md:inline font-medium truncate max-w-[80px]">
+              {myProfile.name}
+            </span>
+          </button>
+        )}
+
         {/* Floating Count Badge */}
-        <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-slate-900/80 border border-slate-700/60 backdrop-blur-md text-[11px] sm:text-xs text-slate-300 shadow-sm">
+        <div className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-slate-900/80 border border-slate-700/60 backdrop-blur-md text-[11px] sm:text-xs text-slate-300 shadow-sm">
           <Sparkles size={13} className="text-amber-400" />
           <span>ลอยอยู่: <strong className="text-amber-300">{krathongCount}</strong></span>
         </div>
