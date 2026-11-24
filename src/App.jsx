@@ -65,10 +65,8 @@ export default function App() {
   const [incomingInvite, setIncomingInvite] = useState(null);
   const [outgoingInviteStatus, setOutgoingInviteStatus] = useState(null); // { status: 'waiting'|'accepted'|'rejected', partner, inviteId }
 
-  // Sync real-time presence & invitations
+  // Sync real-time presence & invitations (works even before user creates a profile)
   useEffect(() => {
-    if (!myProfile) return;
-
     presenceService.start(myProfile, {
       onVisitorsChange: (list) => {
         setOnlineVisitors(list);
